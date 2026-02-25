@@ -1,19 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAddBankDetail, useUpdateBankDetail } from '../hooks/useQueries';
 import type { BankDetail } from '../backend';
-import { Loader2, AlertCircle } from 'lucide-react';
 
 interface BankDetailFormProps {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   bankDetail?: BankDetail | null;
 }
 
-export default function BankDetailForm({ open, onClose, bankDetail }: BankDetailFormProps) {
+export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankDetailFormProps) {
   const addBankDetail = useAddBankDetail();
   const updateBankDetail = useUpdateBankDetail();
 
@@ -23,7 +29,6 @@ export default function BankDetailForm({ open, onClose, bankDetail }: BankDetail
     district: '',
     ifscCode: '',
   });
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (bankDetail) {
@@ -36,73 +41,113 @@ export default function BankDetailForm({ open, onClose, bankDetail }: BankDetail
     } else {
       setForm({ bankName: '', taluka: '', district: '', ifscCode: '' });
     }
-    setError('');
   }, [bankDetail, open]);
 
   const isLoading = addBankDetail.isPending || updateBankDetail.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
-    if (!form.bankName.trim()) { setError('Bank name is required'); return; }
-    if (!form.taluka.trim()) { setError('Taluka is required'); return; }
-    if (!form.district.trim()) { setError('District is required'); return; }
-    if (!form.ifscCode.trim()) { setError('IFSC code is required'); return; }
+    if (!form.bankName.trim() || !form.ifscCode.trim()) {
+      toast.error('बँकेचे नाव आणि IFSC Code आवश्यक आहे');
+      return;
+    }
+
+    const payload = {
+      bankName: form.bankName.trim(),
+      taluka: form.taluka.trim(),
+      district: form.district.trim(),
+      ifscCode: form.ifscCode.trim(),
+    };
 
     try {
-      const data = {
-        bankName: form.bankName.trim(),
-        taluka: form.taluka.trim(),
-        district: form.district.trim(),
-        ifscCode: form.ifscCode.trim(),
-      };
-
       if (bankDetail) {
-        await updateBankDetail.mutateAsync(data);
+        await updateBankDetail.mutateAsync(payload);
+        toast.success('बँक माहिती यशस्वीरित्या अपडेट झाली!');
       } else {
-        await addBankDetail.mutateAsync(data);
+        await addBankDetail.mutateAsync(payload);
+        toast.success('बँक माहिती यशस्वीरित्या जोडली गेली!');
       }
-      onClose();
-    } catch (err: any) {
-      setError(err?.message ?? 'Failed to save bank detail. Please try again.');
+      onOpenChange(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'माहिती save होऊ शकली नाही';
+      toast.error(`Error: ${msg}`);
+      // Do NOT close dialog on error — let user retry
     }
   };
 
+  const handleChange = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o && !isLoading) onClose(); }}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{bankDetail ? 'Edit Bank Detail' : 'Add Bank Detail'}</DialogTitle>
+          <DialogTitle>{bankDetail ? 'बँक माहिती बदला' : 'नवीन बँक जोडा'}</DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-          <div className="space-y-1">
-            <Label htmlFor="bankName">Bank Name</Label>
-            <Input id="bankName" value={form.bankName} onChange={e => setForm(f => ({ ...f, bankName: e.target.value }))} placeholder="Bank name" disabled={isLoading} />
+          <div>
+            <Label htmlFor="bankName">बँकेचे नाव *</Label>
+            <Input
+              id="bankName"
+              value={form.bankName}
+              onChange={(e) => handleChange('bankName', e.target.value)}
+              placeholder="बँकेचे नाव"
+              required
+            />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="ifscCode">IFSC Code</Label>
-            <Input id="ifscCode" value={form.ifscCode} onChange={e => setForm(f => ({ ...f, ifscCode: e.target.value }))} placeholder="e.g. SBIN0001234" disabled={isLoading || !!bankDetail} />
+
+          <div>
+            <Label htmlFor="ifscCode">IFSC Code *</Label>
+            <Input
+              id="ifscCode"
+              value={form.ifscCode}
+              onChange={(e) => handleChange('ifscCode', e.target.value.toUpperCase())}
+              placeholder="IFSC Code"
+              disabled={!!bankDetail}
+              required
+            />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="taluka">Taluka</Label>
-            <Input id="taluka" value={form.taluka} onChange={e => setForm(f => ({ ...f, taluka: e.target.value }))} placeholder="Taluka" disabled={isLoading} />
+
+          <div>
+            <Label htmlFor="taluka">तालुका</Label>
+            <Input
+              id="taluka"
+              value={form.taluka}
+              onChange={(e) => handleChange('taluka', e.target.value)}
+              placeholder="तालुका"
+            />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="district">District</Label>
-            <Input id="district" value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))} placeholder="District" disabled={isLoading} />
+
+          <div>
+            <Label htmlFor="district">जिल्हा</Label>
+            <Input
+              id="district"
+              value={form.district}
+              onChange={(e) => handleChange('district', e.target.value)}
+              placeholder="जिल्हा"
+            />
           </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              रद्द करा
+            </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {bankDetail ? 'Update' : 'Add'} Bank Detail
+              {isLoading && (
+                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+              )}
+              {isLoading ? 'Save होत आहे...' : bankDetail ? 'अपडेट करा' : 'जोडा'}
             </Button>
           </DialogFooter>
         </form>

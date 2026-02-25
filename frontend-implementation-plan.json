@@ -1,60 +1,34 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix frontend data persistence: ensure mutations use authenticated actor and invalidate caches correctly",
+  "title": "Add Date, Previous Balance, and Total Amount fields to Transaction page",
   "requirements": [
     {
-      "id": "REQ-22",
-      "summary": "Fix frontend mutation hooks to use authenticated actor and properly handle responses with cache invalidation",
+      "id": "REQ-28",
+      "summary": "Add Date, Previous Balance, and Total Amount fields to the Transaction page form with auto-computation and consistent styling",
       "acceptanceCriteria": [
-        "The actor used inside every useMutation call is the authenticated actor from useActor, not a default anonymous actor.",
-        "Submitting the Student form as admin saves the record and the Student table updates without a manual page refresh.",
-        "Submitting the Account form as admin saves the record and the Account table updates without a manual page refresh.",
-        "Submitting the Transaction form as admin saves the record and the Transaction table updates without a manual page refresh.",
-        "Adding/editing/deleting a Bank Detail as admin persists and the Bank Details table updates without a manual page refresh.",
-        "No silent failures — if a backend call returns an error, a user-visible error message is shown."
+        "The Transaction form displays a Date field that defaults to today's date and is editable by the admin.",
+        "When an account is selected, the 'Previous Balance' field is automatically populated with the current balance of that account (read-only).",
+        "The 'Total Amount' field is automatically computed: Previous Balance + Amount for Deposit, Previous Balance − Amount for Withdrawal, and updates in real-time as the Amount or Transaction Type changes (read-only).",
+        "All three fields are visually consistent with the existing transaction form styling (colorful, mobile-first, card-based layout).",
+        "The Date value is included when the transaction is saved to the backend.",
+        "The Total Amount value is included when the transaction is saved to the backend."
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Update all mutation hooks (useAddStudent, useUpdateStudent, useDeleteStudent, useAddAccount, useUpdateAccount, useDeleteAccount, useAddTransaction, useAddBankDetail, useUpdateBankDetail, useDeleteBankDetail) to: (1) use the authenticated actor from useActor() inside the mutationFn instead of any default/anonymous actor, (2) await backend responses and check for error variants or thrown errors, (3) call queryClient.invalidateQueries for the relevant cache keys on success (e.g., ['students'] for student mutations, ['accounts'] for account mutations, ['transactions'] and ['transactions', accountNumber] for transaction mutations, ['bankDetails'] for bank detail mutations), and (4) throw or return structured errors so useMutation's onError callback can display them to the user."
-        },
-        {
-          "path": "frontend/src/components/StudentForm.tsx",
-          "operation": "modify",
-          "description": "Update the StudentForm to display error messages from mutation.error when the backend call fails. Ensure the form uses the corrected useAddStudent and useUpdateStudent hooks from useQueries.ts and shows a visible error toast or inline error message if mutation.isError is true."
-        },
-        {
-          "path": "frontend/src/components/AccountForm.tsx",
-          "operation": "modify",
-          "description": "Update the AccountForm to display error messages from mutation.error when the backend call fails. Ensure the form uses the corrected useAddAccount and useUpdateAccount hooks from useQueries.ts and shows a visible error toast or inline error message if mutation.isError is true."
-        },
         {
           "path": "frontend/src/pages/TransactionPage.tsx",
           "operation": "modify",
-          "description": "Update the TransactionPage to display error messages from the useAddTransaction mutation when the backend call fails. Ensure the transaction form shows a visible error toast or inline error message if mutation.isError is true, and that the transaction history list updates without manual refresh after a successful transaction is added."
+          "description": "Add Date input field (defaulting to today's date using YYYY-MM-DD format), Previous Balance read-only field (auto-populated from selected account's current balance via useQueries getAllAccounts hook), and Total Amount read-only field (computed as previousBalance + amount for deposits or previousBalance - amount for withdrawals). Update the form state to include date, previousBalance, and totalAmount. Modify the addTransaction mutation call to pass date as a bigint timestamp (Date.parse), previousBalance as bigint, and totalAmount as bigint. Ensure real-time computation when amount or transactionType changes using useEffect. Maintain consistent styling with existing colorful card-based mobile-first theme (Tailwind classes, same input/label structure as existing fields)."
         },
         {
-          "path": "frontend/src/components/BankDetailForm.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Update the BankDetailForm to display error messages from mutation.error when the backend call fails. Ensure the form uses the corrected useAddBankDetail and useUpdateBankDetail hooks from useQueries.ts and shows a visible error toast or inline error message if mutation.isError is true."
-        }
-      ]
-    },
-    {
-      "id": "REQ-23",
-      "summary": "Ensure useActor hook returns an authenticated actor when admin session is active in localStorage",
-      "acceptanceCriteria": [
-        "When admin is logged in (session present in localStorage), the actor returned by useActor is authenticated and can successfully call update methods on the canister.",
-        "When no session is present (logged out), an anonymous actor is used for read-only query calls.",
-        "Actor identity is refreshed/invalidated when the session changes (login or logout)."
-      ],
-      "file_operations": [
+          "description": "Update the useAddTransaction mutation to accept date (bigint timestamp), previousBalance (bigint), and totalAmount (bigint) parameters alongside the existing accountNumber, transactionType, amount, and reason. Modify the mutationFn to call actor.addTransaction with all required parameters. Ensure the mutation function signature matches the updated backend interface expectation for addTransaction."
+        },
         {
-          "path": "frontend/src/hooks/useAuth.ts",
+          "path": "frontend/src/backend.d.ts",
           "operation": "modify",
-          "description": "Ensure the useAuth hook correctly stores and retrieves admin session state in localStorage with a consistent key (e.g., 'adminSession'). When the admin logs in via the hardcoded admin/admin flow, set a session object in localStorage that the useActor hook can detect. When the admin logs out, remove the session from localStorage and trigger a re-render so useActor can switch to an anonymous actor."
+          "description": "Update the backendInterface addTransaction method signature to accept date (Time/bigint), previousBalance (bigint), and totalAmount (bigint) parameters in addition to accountNumber, transactionType, amount, and reason. Ensure the Transaction interface already includes date, previousBalance, and totalAmount fields (verify they match the backend schema). Update type definitions to reflect the expanded addTransaction method."
         }
       ]
     }

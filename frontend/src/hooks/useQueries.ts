@@ -30,8 +30,8 @@ export function useSaveCallerUserProfile() {
 
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.saveCallerUserProfile(profile);
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
@@ -48,11 +48,7 @@ export function useGetAllStudents() {
     queryKey: ['students'],
     queryFn: async () => {
       if (!actor) return [];
-      try {
-        return await actor.getAllStudents();
-      } catch (e: any) {
-        throw new Error(e?.message ?? 'Failed to fetch students');
-      }
+      return actor.getAllStudents();
     },
     enabled: !!actor && !isFetching,
   });
@@ -67,31 +63,27 @@ export function useAddStudent() {
       name: string;
       dateOfBirth: string;
       className: string;
-      attendanceNumber: bigint;
+      attendanceNumber: number;
       schoolName: string;
       taluka: string;
       district: string;
     }) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        const id = await actor.addStudent(
-          data.name,
-          data.dateOfBirth,
-          data.className,
-          data.attendanceNumber,
-          data.schoolName,
-          data.taluka,
-          data.district
-        );
-        return id;
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can add students.');
-        throw new Error(msg || 'Failed to add student');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.addStudent(
+        data.name,
+        data.dateOfBirth,
+        data.className,
+        BigInt(data.attendanceNumber),
+        data.schoolName,
+        data.taluka,
+        data.district
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
+    },
+    onError: (error: Error) => {
+      console.error('addStudent error:', error.message);
     },
   });
 }
@@ -102,35 +94,32 @@ export function useUpdateStudent() {
 
   return useMutation({
     mutationFn: async (data: {
-      id: bigint;
+      id: number;
       name: string;
       dateOfBirth: string;
       className: string;
-      attendanceNumber: bigint;
+      attendanceNumber: number;
       schoolName: string;
       taluka: string;
       district: string;
     }) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.updateStudent(
-          data.id,
-          data.name,
-          data.dateOfBirth,
-          data.className,
-          data.attendanceNumber,
-          data.schoolName,
-          data.taluka,
-          data.district
-        );
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can update students.');
-        throw new Error(msg || 'Failed to update student');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.updateStudent(
+        BigInt(data.id),
+        data.name,
+        data.dateOfBirth,
+        data.className,
+        BigInt(data.attendanceNumber),
+        data.schoolName,
+        data.taluka,
+        data.district
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
+    },
+    onError: (error: Error) => {
+      console.error('updateStudent error:', error.message);
     },
   });
 }
@@ -140,15 +129,9 @@ export function useDeleteStudent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: bigint) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.deleteStudent(id);
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can delete students.');
-        throw new Error(msg || 'Failed to delete student');
-      }
+    mutationFn: async (id: number) => {
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.deleteStudent(BigInt(id));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
@@ -165,30 +148,9 @@ export function useGetAllAccounts() {
     queryKey: ['accounts'],
     queryFn: async () => {
       if (!actor) return [];
-      try {
-        return await actor.getAllAccounts();
-      } catch (e: any) {
-        throw new Error(e?.message ?? 'Failed to fetch accounts');
-      }
+      return actor.getAllAccounts();
     },
     enabled: !!actor && !isFetching,
-  });
-}
-
-export function useGetAccountByNumber(accountNumber: string) {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<Account | null>({
-    queryKey: ['account', accountNumber],
-    queryFn: async () => {
-      if (!actor || !accountNumber) return null;
-      try {
-        return await actor.getAccountByNumber(accountNumber);
-      } catch (e: any) {
-        throw new Error(e?.message ?? 'Failed to fetch account');
-      }
-    },
-    enabled: !!actor && !isFetching && !!accountNumber,
   });
 }
 
@@ -198,29 +160,26 @@ export function useAddAccount() {
 
   return useMutation({
     mutationFn: async (data: {
-      studentId: bigint;
+      studentId: number;
       bankName: string;
       accountNumber: string;
-      initialAmount: bigint;
+      initialAmount: number;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.addAccount(
-          data.studentId,
-          data.bankName,
-          data.accountNumber,
-          data.initialAmount,
-          data.ifscCode
-        );
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can add accounts.');
-        throw new Error(msg || 'Failed to add account');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.addAccount(
+        BigInt(data.studentId),
+        data.bankName,
+        data.accountNumber,
+        BigInt(data.initialAmount),
+        data.ifscCode
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+    onError: (error: Error) => {
+      console.error('addAccount error:', error.message);
     },
   });
 }
@@ -231,29 +190,26 @@ export function useUpdateAccount() {
 
   return useMutation({
     mutationFn: async (data: {
-      studentId: bigint;
+      studentId: number;
       bankName: string;
       accountNumber: string;
-      initialAmount: bigint;
+      initialAmount: number;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.updateAccount(
-          data.studentId,
-          data.bankName,
-          data.accountNumber,
-          data.initialAmount,
-          data.ifscCode
-        );
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can update accounts.');
-        throw new Error(msg || 'Failed to update account');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.updateAccount(
+        BigInt(data.studentId),
+        data.bankName,
+        data.accountNumber,
+        BigInt(data.initialAmount),
+        data.ifscCode
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+    onError: (error: Error) => {
+      console.error('updateAccount error:', error.message);
     },
   });
 }
@@ -264,14 +220,8 @@ export function useDeleteAccount() {
 
   return useMutation({
     mutationFn: async (accountNumber: string) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.deleteAccount(accountNumber);
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can delete accounts.');
-        throw new Error(msg || 'Failed to delete account');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.deleteAccount(accountNumber);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
@@ -288,11 +238,7 @@ export function useGetAllTransactions() {
     queryKey: ['transactions'],
     queryFn: async () => {
       if (!actor) return [];
-      try {
-        return await actor.getAllTransactions();
-      } catch (e: any) {
-        throw new Error(e?.message ?? 'Failed to fetch transactions');
-      }
+      return actor.getAllTransactions();
     },
     enabled: !!actor && !isFetching,
   });
@@ -304,12 +250,9 @@ export function useGetTransactionsByAccount(accountNumber: string) {
   return useQuery<Transaction[]>({
     queryKey: ['transactions', accountNumber],
     queryFn: async () => {
-      if (!actor || !accountNumber) return [];
-      try {
-        return await actor.getTransactionsByAccount(accountNumber);
-      } catch (e: any) {
-        throw new Error(e?.message ?? 'Failed to fetch transactions');
-      }
+      if (!actor) return [];
+      if (!accountNumber) return [];
+      return actor.getTransactionsByAccount(accountNumber);
     },
     enabled: !!actor && !isFetching && !!accountNumber,
   });
@@ -322,11 +265,7 @@ export function useGetTransactionsByDateRange(startDate: bigint, endDate: bigint
     queryKey: ['transactions', 'dateRange', startDate.toString(), endDate.toString()],
     queryFn: async () => {
       if (!actor) return [];
-      try {
-        return await actor.getTransactionsByDateRange(startDate, endDate);
-      } catch (e: any) {
-        throw new Error(e?.message ?? 'Failed to fetch transactions');
-      }
+      return actor.getTransactionsByDateRange(startDate, endDate);
     },
     enabled: !!actor && !isFetching && enabled,
   });
@@ -340,26 +279,23 @@ export function useAddTransaction() {
     mutationFn: async (data: {
       accountNumber: string;
       transactionType: string;
-      amount: bigint;
+      amount: number;
       reason: string;
     }) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.addTransaction(
-          data.accountNumber,
-          data.transactionType,
-          data.amount,
-          data.reason
-        );
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can add transactions.');
-        throw new Error(msg || 'Failed to add transaction');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.addTransaction(
+        data.accountNumber,
+        data.transactionType,
+        BigInt(data.amount),
+        data.reason
+      );
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['transactions', variables.accountNumber] });
+    },
+    onError: (error: Error) => {
+      console.error('addTransaction error:', error.message);
     },
   });
 }
@@ -373,11 +309,7 @@ export function useGetAllBankDetails() {
     queryKey: ['bankDetails'],
     queryFn: async () => {
       if (!actor) return [];
-      try {
-        return await actor.getAllBankDetails();
-      } catch (e: any) {
-        throw new Error(e?.message ?? 'Failed to fetch bank details');
-      }
+      return actor.getAllBankDetails();
     },
     enabled: !!actor && !isFetching,
   });
@@ -394,22 +326,14 @@ export function useAddBankDetail() {
       district: string;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.addBankDetail(
-          data.bankName,
-          data.taluka,
-          data.district,
-          data.ifscCode
-        );
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can add bank details.');
-        throw new Error(msg || 'Failed to add bank detail');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.addBankDetail(data.bankName, data.taluka, data.district, data.ifscCode);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bankDetails'] });
+    },
+    onError: (error: Error) => {
+      console.error('addBankDetail error:', error.message);
     },
   });
 }
@@ -425,22 +349,14 @@ export function useUpdateBankDetail() {
       district: string;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.updateBankDetail(
-          data.bankName,
-          data.taluka,
-          data.district,
-          data.ifscCode
-        );
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can update bank details.');
-        throw new Error(msg || 'Failed to update bank detail');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.updateBankDetail(data.bankName, data.taluka, data.district, data.ifscCode);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bankDetails'] });
+    },
+    onError: (error: Error) => {
+      console.error('updateBankDetail error:', error.message);
     },
   });
 }
@@ -451,36 +367,11 @@ export function useDeleteBankDetail() {
 
   return useMutation({
     mutationFn: async (ifscCode: string) => {
-      if (!actor) throw new Error('Actor not available. Please log in again.');
-      try {
-        await actor.deleteBankDetail(ifscCode);
-      } catch (e: any) {
-        const msg = e?.message ?? String(e);
-        if (msg.includes('Unauthorized')) throw new Error('Unauthorized: Only admins can delete bank details.');
-        throw new Error(msg || 'Failed to delete bank detail');
-      }
+      if (!actor) throw new Error('Actor not ready — please try again');
+      return actor.deleteBankDetail(ifscCode);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bankDetails'] });
     },
-  });
-}
-
-// ─── Admin / Role ─────────────────────────────────────────────────────────────
-
-export function useIsCallerAdmin() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<boolean>({
-    queryKey: ['isCallerAdmin'],
-    queryFn: async () => {
-      if (!actor) return false;
-      try {
-        return await actor.isCallerAdmin();
-      } catch {
-        return false;
-      }
-    },
-    enabled: !!actor && !isFetching,
   });
 }

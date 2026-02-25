@@ -2,13 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-frontend-mutation-hooks-in-usequeries-ts-to-use-an-authenticated-actor-not-anonymous-when-the-admin-is-logged-in-each-mutation-must-call-the-correct-backend-update-method-await-the-response-handle-any-returned-error-variants-and-invalidate-the-relevant-react-query-cache-on-success-so-the-ui-reflects-persisted-data-without-a-manual-refresh",
-      "featureTitle": "Fix the frontend mutation hooks in useQueries.ts to use an authenticated actor (not anonymous) when the admin is logged in. Each mutation must call the correct backend update method, await the response, handle any returned error variants, and invalidate the relevant React Query cache on success so the UI reflects persisted data without a manual refresh.",
+      "featureId": "feature-on-the-transaction-page-form-add-a-date-field-date-input-defaulting-to-today-s-date-a-previous-balance-field-read-only-auto-filled-with-the-current-account-balance-when-an-account-number-is-selected-and-a-total-amount-field-read-only-computed-as-previous-balance-amount-for-deposits-or-previous-balance-amount-for-withdrawals-ensure-these-fields-are-visible-clearly-labelled-and-consistent-with-the-existing-colorful-card-based-mobile-first-theme",
+      "featureTitle": "On the Transaction page form, add a Date field (date input, defaulting to today's date), a 'Previous Balance' field (read-only, auto-filled with the current account balance when an account number is selected), and a 'Total Amount' field (read-only, computed as Previous Balance + Amount for deposits or Previous Balance − Amount for withdrawals). Ensure these fields are visible, clearly labelled, and consistent with the existing colorful card-based mobile-first theme.",
       "files": [
-        "frontend/src/components/AccountForm.tsx",
-        "frontend/src/components/BankDetailForm.tsx",
-        "frontend/src/components/StudentForm.tsx",
-        "frontend/src/hooks/useQueries.ts",
         "frontend/src/pages/TransactionPage.tsx"
       ],
       "components": [
@@ -20,26 +16,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-22"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-the-useactor-hook-correctly-initialises-and-returns-an-authenticated-actor-whenever-the-admin-session-is-active-in-localstorage-so-that-canister-update-calls-made-after-admin-login-are-signed-with-a-valid-identity-and-not-rejected-by-the-backend-s-role-based-access-control",
-      "featureTitle": "Ensure the useActor hook correctly initialises and returns an authenticated actor whenever the admin session is active in localStorage, so that canister update calls made after admin login are signed with a valid identity and not rejected by the backend's role-based access control.",
-      "files": [
-        "frontend/src/hooks/useAuth.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-23"
+        "REQ-28"
       ],
       "confidence": "high"
     }

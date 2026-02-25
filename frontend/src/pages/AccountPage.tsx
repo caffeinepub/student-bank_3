@@ -40,9 +40,9 @@ export default function AccountPage() {
     }
   };
 
-  const handleClose = () => {
-    setShowForm(false);
-    setEditAccount(null);
+  const handleOpenChange = (open: boolean) => {
+    setShowForm(open);
+    if (!open) setEditAccount(null);
   };
 
   return (
@@ -131,7 +131,7 @@ export default function AccountPage() {
       <AccountForm
         open={showForm}
         account={editAccount}
-        onClose={handleClose}
+        onOpenChange={handleOpenChange}
       />
     </div>
   );

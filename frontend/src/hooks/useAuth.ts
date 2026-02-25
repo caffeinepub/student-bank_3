@@ -1,118 +1,83 @@
-import { createContext, useContext, useState, useCallback, ReactNode, createElement } from 'react';
+import { createContext, useContext, useState, createElement } from 'react';
+import type { ReactNode } from 'react';
 import { useInternetIdentity } from './useInternetIdentity';
 
-export type UserRole = 'admin' | 'user' | 'guest';
-
-export interface AuthSession {
-  role: UserRole;
-  username: string;
-  accountNumber?: string;
-  useInternetIdentity?: boolean;
-}
+export type AuthRole = 'admin' | 'user' | 'guest';
 
 interface AuthContextType {
-  session: AuthSession | null;
-  isAuthenticated: boolean;
+  role: AuthRole;
   isAdmin: boolean;
   isUser: boolean;
-  login: (username: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
+  isAuthenticated: boolean;
+  userAccountNumber: string | null;
+  login: (accountNumber: string, password: string, loginType: AuthRole) => Promise<boolean>;
   logout: () => void;
-  isLoggingIn: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const SESSION_KEY = 'adminSession';
-
-// ─── Provider ────────────────────────────────────────────────────────────────
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { login: iiLogin, clear: iiClear } = useInternetIdentity();
-  const [session, setSession] = useState<AuthSession | null>(() => {
-    try {
-      const stored = localStorage.getItem(SESSION_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
+
+  const [role, setRole] = useState<AuthRole>(() => {
+    const saved = localStorage.getItem('auth_role');
+    return (saved as AuthRole) || 'guest';
   });
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const login = useCallback(
-    async (username: string, password: string, role: UserRole): Promise<{ success: boolean; error?: string }> => {
-      setIsLoggingIn(true);
-      try {
-        if (role === 'admin') {
-          if (username !== 'admin' || password !== 'admin') {
-            return { success: false, error: 'Invalid admin credentials' };
-          }
-          // Trigger Internet Identity login for authenticated actor
-          try {
-            await iiLogin();
-          } catch {
-            // II login may open a popup; proceed with session regardless
-          }
-          const newSession: AuthSession = {
-            role: 'admin',
-            username: 'admin',
-            useInternetIdentity: true,
-          };
-          setSession(newSession);
-          localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
-          return { success: true };
-        } else {
-          // User login: account number = password
-          const accountNumber = username.trim();
-          const pwd = password.trim();
-          if (!accountNumber || accountNumber !== pwd) {
-            return { success: false, error: 'Account number and password must match' };
-          }
-          const newSession: AuthSession = {
-            role: 'user',
-            username: accountNumber,
-            accountNumber,
-            useInternetIdentity: false,
-          };
-          setSession(newSession);
-          localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
-          return { success: true };
-        }
-      } catch (e: any) {
-        return { success: false, error: e?.message ?? 'Login failed' };
-      } finally {
-        setIsLoggingIn(false);
-      }
-    },
-    [iiLogin]
-  );
+  const [userAccountNumber, setUserAccountNumber] = useState<string | null>(() => {
+    return localStorage.getItem('auth_account_number');
+  });
 
-  const logout = useCallback(async () => {
-    setSession(null);
-    localStorage.removeItem(SESSION_KEY);
-    try {
-      await iiClear();
-    } catch {
-      // ignore
+  const isAuthenticated = role !== 'guest';
+  const isAdmin = role === 'admin';
+  const isUser = role === 'user';
+
+  const login = async (
+    accountNumber: string,
+    _password: string,
+    loginType: AuthRole
+  ): Promise<boolean> => {
+    if (loginType === 'admin') {
+      // Must successfully complete II login before granting admin session
+      // If iiLogin throws, the error propagates to the caller
+      await iiLogin();
+      setRole('admin');
+      localStorage.setItem('auth_role', 'admin');
+      return true;
+    } else if (loginType === 'user') {
+      if (!accountNumber.trim()) return false;
+      setRole('user');
+      setUserAccountNumber(accountNumber.trim());
+      localStorage.setItem('auth_role', 'user');
+      localStorage.setItem('auth_account_number', accountNumber.trim());
+      return true;
     }
-  }, [iiClear]);
+    return false;
+  };
+
+  const logout = () => {
+    iiClear();
+    setRole('guest');
+    setUserAccountNumber(null);
+    localStorage.removeItem('auth_role');
+    localStorage.removeItem('auth_account_number');
+  };
 
   const value: AuthContextType = {
-    session,
-    isAuthenticated: !!session,
-    isAdmin: session?.role === 'admin',
-    isUser: session?.role === 'user',
+    role,
+    isAdmin,
+    isUser,
+    isAuthenticated,
+    userAccountNumber,
     login,
     logout,
-    isLoggingIn,
   };
 
   return createElement(AuthContext.Provider, { value }, children);
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
-export function useAuth(): AuthContextType {
+export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }

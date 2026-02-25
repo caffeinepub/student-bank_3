@@ -1,79 +1,59 @@
 {
   "kind": "build_request",
-  "title": "Fix data persistence for admin: ensure all create/update/delete operations save correctly to the canister",
+  "title": "Add Date, Previous Balance, and Total Amount fields to Transaction page",
   "projectName": "Student Bank",
-  "priority": "high",
+  "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-21",
-      "text": "Fix the backend Motoko actor so that all write operations (addStudent, updateStudent, deleteStudent, addAccount, updateAccount, deleteAccount, addTransaction, addBankDetail, updateBankDetail, deleteBankDetail) correctly persist data to stable storage and survive canister upgrades. Ensure no write is silently dropped or lost.",
+      "id": "REQ-28",
+      "text": "On the Transaction page form, add a Date field (date input, defaulting to today's date), a 'Previous Balance' field (read-only, auto-filled with the current account balance when an account number is selected), and a 'Total Amount' field (read-only, computed as Previous Balance + Amount for deposits or Previous Balance − Amount for withdrawals). Ensure these fields are visible, clearly labelled, and consistent with the existing colorful card-based mobile-first theme.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Transactions page मध्ये date आणि मागील शिल्लक रक्कम, एकुण रक्कम अश्या फिल्ड घ्या"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Transaction form displays a Date field that defaults to today's date and is editable by the admin.",
+        "When an account is selected, the 'Previous Balance' field is automatically populated with the current balance of that account (read-only).",
+        "The 'Total Amount' field is automatically computed: Previous Balance + Amount for Deposit, Previous Balance − Amount for Withdrawal, and updates in real-time as the Amount or Transaction Type changes (read-only).",
+        "All three fields are visually consistent with the existing transaction form styling (colorful, mobile-first, card-based layout).",
+        "The Date value is included when the transaction is saved to the backend.",
+        "The Total Amount value is included when the transaction is saved to the backend."
+      ]
+    },
+    {
+      "id": "REQ-29",
+      "text": "Update the backend Motoko transaction data model and addTransaction method to store the transaction date (as a Text or Int timestamp), previous balance (Nat or Float), and total amount (Nat or Float) fields if they are not already stored. Ensure existing CRUD methods (getTransactionsByAccount, getAllTransactions, getTransactionsByDateRange) return these new fields.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "admin लॉगीन केल्यावर admin लॉगीन मधून माहिती save व्हावी"
+          "Transactions page मध्ये date आणि मागील शिल्लक रक्कम, एकुण रक्कम अश्या फिल्ड घ्या"
         ]
       },
       "acceptanceCriteria": [
-        "After admin logs in and adds a student, the student record appears in getAllStudents immediately and after a page refresh.",
-        "After admin adds an account, the account record persists in getAllAccounts after page refresh.",
-        "After admin submits a transaction, the transaction is retrievable via getTransactionsByAccount after page refresh.",
-        "After admin adds/edits/deletes a bank detail, the change persists in getAllBankDetails after page refresh.",
-        "All stable variables in main.mo are declared with the 'stable' keyword so data survives canister upgrades."
-      ]
-    },
-    {
-      "id": "REQ-22",
-      "text": "Fix the frontend mutation hooks in useQueries.ts to use an authenticated actor (not anonymous) when the admin is logged in. Each mutation must call the correct backend update method, await the response, handle any returned error variants, and invalidate the relevant React Query cache on success so the UI reflects persisted data without a manual refresh.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "admin लॉगीन केल्यावर admin लॉगीन मधून माहिती save व्हावी"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The actor used inside every useMutation call is the authenticated actor from useActor, not a default anonymous actor.",
-        "Submitting the Student form as admin saves the record and the Student table updates without a manual page refresh.",
-        "Submitting the Account form as admin saves the record and the Account table updates without a manual page refresh.",
-        "Submitting the Transaction form as admin saves the record and the Transaction table updates without a manual page refresh.",
-        "Adding/editing/deleting a Bank Detail as admin persists and the Bank Details table updates without a manual page refresh.",
-        "No silent failures — if a backend call returns an error, a user-visible error message is shown."
-      ]
-    },
-    {
-      "id": "REQ-23",
-      "text": "Ensure the useActor hook correctly initialises and returns an authenticated actor whenever the admin session is active in localStorage, so that canister update calls made after admin login are signed with a valid identity and not rejected by the backend's role-based access control.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "admin लॉगीन केल्यावर admin लॉगीन मधून माहिती save व्हावी"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When admin is logged in (session present in localStorage), the actor returned by useActor is authenticated and can successfully call update methods on the canister.",
-        "When no session is present (logged out), an anonymous actor is used for read-only query calls.",
-        "Actor identity is refreshed/invalidated when the session changes (login or logout)."
+        "The Transaction record type in the Motoko actor includes fields for date, previousBalance, and totalAmount.",
+        "The addTransaction method accepts and stores these three fields.",
+        "getAllTransactions, getTransactionsByAccount, and getTransactionsByDateRange return the date, previousBalance, and totalAmount for each transaction.",
+        "Existing stored transactions are not broken by the schema change (migration handles missing fields gracefully)."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files listed in frontend.immutablePaths (useInternetIdentity.ts, useActor.ts, main.tsx, components/ui).",
-    "All backend logic must remain in the single actor in backend/main.mo.",
-    "Only generate migration.mo if stable storage schema changes require it."
+    "Do not modify any file under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "All backend logic must remain in the single-actor backend/main.mo file.",
+    "Generate backend/migration.mo only if the transaction data model changes require stable storage migration."
   ],
   "nonGoals": [
-    "Changing the visual design or color theme.",
-    "Adding new pages or navigation items.",
-    "Modifying the login credential logic (admin/admin or account-number-based user login).",
-    "Any third-party integrations (Google Sheets, email, etc.)."
+    "Changing any other transaction form fields beyond Date, Previous Balance, and Total Amount.",
+    "Modifying the History page, Passbook page, or any other page layout.",
+    "Adding new backend CRUD endpoints beyond updating the existing transaction record type and addTransaction method."
   ],
   "imageRequirements": {
     "required": [],

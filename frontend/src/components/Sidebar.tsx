@@ -98,7 +98,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarProps) {
-  const { session, logout, isAdmin } = useAuth();
+  const { userAccountNumber, logout, isAdmin } = useAuth();
 
   const visibleItems = navItems.filter((item) => !item.adminOnly || isAdmin);
 
@@ -157,11 +157,11 @@ export default function Sidebar({ currentPage, onNavigate, isOpen, onClose }: Si
                 isAdmin ? 'gradient-green' : 'gradient-orange'
               }`}
             >
-              {isAdmin ? 'A' : session?.username?.charAt(0)?.toUpperCase() || 'U'}
+              {isAdmin ? 'A' : (userAccountNumber?.charAt(0)?.toUpperCase() || 'U')}
             </div>
             <div className="min-w-0">
               <p className="text-white font-semibold text-sm truncate">
-                {isAdmin ? 'Administrator' : `Account: ${session?.accountNumber}`}
+                {isAdmin ? 'Administrator' : `Account: ${userAccountNumber}`}
               </p>
               <p className={`text-xs font-medium ${isAdmin ? 'text-green-400' : 'text-orange-400'}`}>
                 {isAdmin ? '● Admin' : '● User'}

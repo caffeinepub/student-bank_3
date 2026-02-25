@@ -24,14 +24,12 @@ const queryClient = new QueryClient({
 });
 
 function AppInner() {
-  const { session, isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const [currentPage, setCurrentPage] = useState<PageId>('home');
 
   if (!isAuthenticated) {
     return <LoginPage />;
   }
-
-  const isAdmin = session?.role === 'admin';
 
   const renderPage = () => {
     switch (currentPage) {

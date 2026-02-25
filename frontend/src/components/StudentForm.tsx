@@ -1,19 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAddStudent, useUpdateStudent } from '../hooks/useQueries';
 import type { Student } from '../backend';
-import { Loader2, AlertCircle } from 'lucide-react';
 
 interface StudentFormProps {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   student?: Student | null;
 }
 
-export default function StudentForm({ open, onClose, student }: StudentFormProps) {
+export default function StudentForm({ open, onOpenChange, student }: StudentFormProps) {
   const addStudent = useAddStudent();
   const updateStudent = useUpdateStudent();
 
@@ -26,7 +32,6 @@ export default function StudentForm({ open, onClose, student }: StudentFormProps
     taluka: '',
     district: '',
   });
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (student) {
@@ -40,104 +45,161 @@ export default function StudentForm({ open, onClose, student }: StudentFormProps
         district: student.district,
       });
     } else {
-      setForm({ name: '', dateOfBirth: '', className: '', attendanceNumber: '', schoolName: '', taluka: '', district: '' });
+      setForm({
+        name: '',
+        dateOfBirth: '',
+        className: '',
+        attendanceNumber: '',
+        schoolName: '',
+        taluka: '',
+        district: '',
+      });
     }
-    setError('');
   }, [student, open]);
 
   const isLoading = addStudent.isPending || updateStudent.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
-    if (!form.name.trim()) { setError('Name is required'); return; }
-    if (!form.dateOfBirth.trim()) { setError('Date of birth is required'); return; }
-    if (!form.className.trim()) { setError('Class is required'); return; }
-    if (!form.attendanceNumber.trim()) { setError('Attendance number is required'); return; }
-    if (!form.schoolName.trim()) { setError('School name is required'); return; }
-    if (!form.taluka.trim()) { setError('Taluka is required'); return; }
-    if (!form.district.trim()) { setError('District is required'); return; }
+    if (!form.name.trim() || !form.dateOfBirth || !form.className.trim() || !form.attendanceNumber) {
+      toast.error('कृपया सर्व आवश्यक माहिती भरा');
+      return;
+    }
 
-    const attendanceNumber = BigInt(form.attendanceNumber);
+    const payload = {
+      name: form.name.trim(),
+      dateOfBirth: form.dateOfBirth,
+      className: form.className.trim(),
+      attendanceNumber: parseInt(form.attendanceNumber, 10),
+      schoolName: form.schoolName.trim(),
+      taluka: form.taluka.trim(),
+      district: form.district.trim(),
+    };
 
     try {
       if (student) {
-        await updateStudent.mutateAsync({
-          id: student.id,
-          name: form.name.trim(),
-          dateOfBirth: form.dateOfBirth.trim(),
-          className: form.className.trim(),
-          attendanceNumber,
-          schoolName: form.schoolName.trim(),
-          taluka: form.taluka.trim(),
-          district: form.district.trim(),
-        });
+        await updateStudent.mutateAsync({ id: Number(student.id), ...payload });
+        toast.success('विद्यार्थी माहिती यशस्वीरित्या अपडेट झाली!');
       } else {
-        await addStudent.mutateAsync({
-          name: form.name.trim(),
-          dateOfBirth: form.dateOfBirth.trim(),
-          className: form.className.trim(),
-          attendanceNumber,
-          schoolName: form.schoolName.trim(),
-          taluka: form.taluka.trim(),
-          district: form.district.trim(),
-        });
+        await addStudent.mutateAsync(payload);
+        toast.success('विद्यार्थी यशस्वीरित्या जोडला गेला!');
       }
-      onClose();
-    } catch (err: any) {
-      setError(err?.message ?? 'Failed to save student. Please try again.');
+      onOpenChange(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'माहिती save होऊ शकली नाही';
+      toast.error(`Error: ${msg}`);
+      // Do NOT close dialog on error — let user retry
     }
   };
 
+  const handleChange = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o && !isLoading) onClose(); }}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{student ? 'Edit Student' : 'Add Student'}</DialogTitle>
+          <DialogTitle>{student ? 'विद्यार्थी माहिती बदला' : 'नवीन विद्यार्थी जोडा'}</DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Student name" disabled={isLoading} />
+            <div className="col-span-2">
+              <Label htmlFor="name">नाव *</Label>
+              <Input
+                id="name"
+                value={form.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                placeholder="विद्यार्थ्याचे नाव"
+                required
+              />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="dob">Date of Birth</Label>
-              <Input id="dob" type="date" value={form.dateOfBirth} onChange={e => setForm(f => ({ ...f, dateOfBirth: e.target.value }))} disabled={isLoading} />
+
+            <div>
+              <Label htmlFor="dateOfBirth">जन्मतारीख *</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+                required
+              />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="class">Class</Label>
-              <Input id="class" value={form.className} onChange={e => setForm(f => ({ ...f, className: e.target.value }))} placeholder="e.g. 5th" disabled={isLoading} />
+
+            <div>
+              <Label htmlFor="className">वर्ग *</Label>
+              <Input
+                id="className"
+                value={form.className}
+                onChange={(e) => handleChange('className', e.target.value)}
+                placeholder="उदा. 5वी"
+                required
+              />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="attendance">Attendance Number</Label>
-              <Input id="attendance" type="number" value={form.attendanceNumber} onChange={e => setForm(f => ({ ...f, attendanceNumber: e.target.value }))} placeholder="e.g. 42" disabled={isLoading} />
+
+            <div>
+              <Label htmlFor="attendanceNumber">हजेरी क्रमांक *</Label>
+              <Input
+                id="attendanceNumber"
+                type="number"
+                min="1"
+                value={form.attendanceNumber}
+                onChange={(e) => handleChange('attendanceNumber', e.target.value)}
+                placeholder="हजेरी क्रमांक"
+                required
+              />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="school">School Name</Label>
-              <Input id="school" value={form.schoolName} onChange={e => setForm(f => ({ ...f, schoolName: e.target.value }))} placeholder="School name" disabled={isLoading} />
+
+            <div>
+              <Label htmlFor="schoolName">शाळेचे नाव</Label>
+              <Input
+                id="schoolName"
+                value={form.schoolName}
+                onChange={(e) => handleChange('schoolName', e.target.value)}
+                placeholder="शाळेचे नाव"
+              />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="taluka">Taluka</Label>
-              <Input id="taluka" value={form.taluka} onChange={e => setForm(f => ({ ...f, taluka: e.target.value }))} placeholder="Taluka" disabled={isLoading} />
+
+            <div>
+              <Label htmlFor="taluka">तालुका</Label>
+              <Input
+                id="taluka"
+                value={form.taluka}
+                onChange={(e) => handleChange('taluka', e.target.value)}
+                placeholder="तालुका"
+              />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="district">District</Label>
-              <Input id="district" value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))} placeholder="District" disabled={isLoading} />
+
+            <div>
+              <Label htmlFor="district">जिल्हा</Label>
+              <Input
+                id="district"
+                value={form.district}
+                onChange={(e) => handleChange('district', e.target.value)}
+                placeholder="जिल्हा"
+              />
             </div>
           </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              रद्द करा
+            </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {student ? 'Update' : 'Add'} Student
+              {isLoading && (
+                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+              )}
+              {isLoading ? 'Save होत आहे...' : student ? 'अपडेट करा' : 'जोडा'}
             </Button>
           </DialogFooter>
         </form>

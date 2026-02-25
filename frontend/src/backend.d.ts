@@ -25,9 +25,11 @@ export interface Transaction {
     transactionType: string;
     studentName: string;
     date: Time;
+    totalAmount: bigint;
     runningBalance: bigint;
     accountNumber: string;
     amount: bigint;
+    previousBalance: bigint;
     reason: string;
 }
 export type Time = bigint;

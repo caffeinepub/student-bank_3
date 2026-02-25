@@ -1,16 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useGetAllAccounts, useGetAllStudents, useGetTransactionsByAccount } from '../hooks/useQueries';
 import { useAuth } from '../hooks/useAuth';
-import type { Account, Student, Transaction } from '../backend';
 import { BookOpen, Search, Printer, TrendingUp, TrendingDown, Building2 } from 'lucide-react';
 
 export default function PassbookPage() {
-  const { session, isAdmin } = useAuth();
+  const { userAccountNumber, isAdmin } = useAuth();
   const { data: accounts = [] } = useGetAllAccounts();
   const { data: students = [] } = useGetAllStudents();
 
   // For user role, auto-populate with their account number
-  const defaultAccNum = isAdmin ? '' : (session?.accountNumber || '');
+  const defaultAccNum = isAdmin ? '' : (userAccountNumber || '');
   const [inputAccNum, setInputAccNum] = useState(defaultAccNum);
   const [lookupAccNum, setLookupAccNum] = useState(isAdmin ? '' : defaultAccNum);
 
@@ -22,7 +21,7 @@ export default function PassbookPage() {
   const handleLookup = () => {
     if (!inputAccNum.trim()) return;
     // User can only view their own account
-    if (!isAdmin && inputAccNum.trim() !== session?.accountNumber) {
+    if (!isAdmin && inputAccNum.trim() !== userAccountNumber) {
       alert('You can only view your own account passbook.');
       return;
     }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 9,
+  "projectStateVersion": 13,
   "summary": "Student Bank mobile app - a colorful, stylish banking app for students with admin and user roles. Features include login/logout, folding dashboard, student management, account management, transaction processing, history with print/download, passbook print, and bank details. Data stored in browser and synced across devices via canister-based storage.",
   "architectural_notes": [
     "Role-based access: admin (username: admin, password: admin) sees all pages; user (username: account number, password: account number) sees only Passbook Print and Bank Details",
@@ -12,7 +12,7 @@
     "Login is not working - users cannot log in",
     "Data entered by admin after login is not being saved/persisted"
   ],
-  "isFixRequest": true,
+  "isFixRequest": false,
   "existing_features": [
     {
       "id": "feature-implement-a-colorful-stylish-mobile-first-visual-theme-with-gradient-colors-card-based-layouts-vibrant-accent-colors-greens-oranges-teals-not-blue-purple-bold-typography-smooth-transitions-and-consistent-design-language-across-all-pages",
@@ -141,6 +141,30 @@
         "REQ-23"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-fix-the-frontend-mutation-hooks-in-usequeries-ts-to-reliably-obtain-an-actor-instance-before-calling-any-backend-write-method-if-the-actor-is-null-or-anonymous-at-the-time-of-mutation-e-g-because-the-hook-has-not-yet-resolved-throw-a-clear-error-message-actor-not-ready-please-try-again-rather-than-silently-doing-nothing-after-a-successful-write-invalidate-the-relevant-react-query-cache-keys-so-the-ui-reflects-the-persisted-data-immediately-without-a-manual-page-refresh",
+      "title": "Fix the frontend mutation hooks in useQueries.ts to reliably obtain an actor instance before calling any backend write method. If the actor is null or anonymous at the time of mutation (e.g., because the hook has not yet resolved), throw a clear error message ('Actor not ready — please try again') rather than silently doing nothing. After a successful write, invalidate the relevant React Query cache keys so the UI reflects the persisted data immediately without a manual page refresh.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-visible-error-feedback-toast-notification-or-inline-error-message-on-every-form-submission-failure-across-studentform-accountform-bankdetailform-and-transactionpage-if-the-mutation-throws-or-the-backend-returns-an-err-variant-display-the-error-message-to-the-admin-so-they-know-the-save-failed-and-why",
+      "title": "Add visible error feedback (toast notification or inline error message) on every form submission failure across StudentForm, AccountForm, BankDetailForm, and TransactionPage. If the mutation throws or the backend returns an #err variant, display the error message to the admin so they know the save failed and why.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-on-the-transaction-page-form-add-a-date-field-date-input-defaulting-to-today-s-date-a-previous-balance-field-read-only-auto-filled-with-the-current-account-balance-when-an-account-number-is-selected-and-a-total-amount-field-read-only-computed-as-previous-balance-amount-for-deposits-or-previous-balance-amount-for-withdrawals-ensure-these-fields-are-visible-clearly-labelled-and-consistent-with-the-existing-colorful-card-based-mobile-first-theme",
+      "title": "On the Transaction page form, add a Date field (date input, defaulting to today's date), a 'Previous Balance' field (read-only, auto-filled with the current account balance when an account number is selected), and a 'Total Amount' field (read-only, computed as Previous Balance + Amount for deposits or Previous Balance − Amount for withdrawals). Ensure these fields are visible, clearly labelled, and consistent with the existing colorful card-based mobile-first theme.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -257,6 +281,36 @@
       "summary": "Fix the backend Motoko actor so that all write operations (addStudent, updateStudent, deleteStudent, addAccount, updateAccount, deleteAccount, addTransaction, addBankDetail, updateBankDetail, deleteBankDetail) correctly persist data to stable storage and survive canister upgrades. Ensure no write is silently dropped or lost.",
       "reqIds": [
         "REQ-21"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-28",
+      "summary": "Audit and fix the backend Motoko actor so that every write operation (addStudent, updateStudent, deleteStudent, addAccount, updateAccount, deleteAccount, addTransaction, addBankDetail, updateBankDetail, deleteBankDetail) correctly stores data into stable variables and the data survives canister upgrades. Ensure no write is silently dropped, returns an error variant that is ignored, or fails due to caller-identity checks when called from the frontend.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-29",
+      "summary": "Fix the role-based access control in the backend Motoko actor so that the admin caller principal is correctly recognised and permitted to execute all write operations. If the current implementation blocks non-Internet-Identity principals or uses a hardcoded principal check that fails in practice, replace it with a permissive but safe mechanism (e.g., allow any authenticated caller, or remove the principal guard entirely for canister-level admin operations) so that form submissions from the frontend are not silently rejected.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-30",
+      "summary": "Transaction page: add Date field (default today), Previous Balance (auto-filled from account), and Total Amount (computed after transaction) fields",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-32",
+      "summary": "Update the backend Motoko transaction data model and addTransaction method to store the transaction date (as a Text or Int timestamp), previous balance (Nat or Float), and total amount (Nat or Float) fields if they are not already stored. Ensure existing CRUD methods (getTransactionsByAccount, getAllTransactions, getTransactionsByDateRange) return these new fields.",
+      "reqIds": [
+        "REQ-29"
       ],
       "status": "pending"
     }

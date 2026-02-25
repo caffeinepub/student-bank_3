@@ -27,16 +27,16 @@ export default function StudentPage() {
     if (!confirm('हा विद्यार्थी हटवायचा आहे का?')) return;
     setDeleteError('');
     try {
-      await deleteStudent.mutateAsync(id);
+      await deleteStudent.mutateAsync(Number(id));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setDeleteError(`हटवताना त्रुटी: ${msg}`);
     }
   };
 
-  const handleClose = () => {
-    setShowForm(false);
-    setEditStudent(null);
+  const handleOpenChange = (open: boolean) => {
+    setShowForm(open);
+    if (!open) setEditStudent(null);
   };
 
   return (
@@ -126,8 +126,8 @@ export default function StudentPage() {
 
       <StudentForm
         open={showForm}
+        onOpenChange={handleOpenChange}
         student={editStudent}
-        onClose={handleClose}
       />
     </div>
   );

@@ -35,9 +35,9 @@ export default function BankDetailsPage() {
     }
   };
 
-  const handleClose = () => {
-    setShowForm(false);
-    setEditBankDetail(null);
+  const handleOpenChange = (open: boolean) => {
+    setShowForm(open);
+    if (!open) setEditBankDetail(null);
   };
 
   return (
@@ -81,7 +81,7 @@ export default function BankDetailsPage() {
               <thead className="bg-muted/50">
                 <tr>
                   <th className="text-left p-3 font-medium text-muted-foreground">बँकेचे नाव</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">IFSC कोड</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">IFSC Code</th>
                   <th className="text-left p-3 font-medium text-muted-foreground">तालुका</th>
                   <th className="text-left p-3 font-medium text-muted-foreground">जिल्हा</th>
                   <th className="text-left p-3 font-medium text-muted-foreground">क्रिया</th>
@@ -91,7 +91,7 @@ export default function BankDetailsPage() {
                 {filtered.map(bd => (
                   <tr key={bd.ifscCode} className="border-t border-border hover:bg-muted/30 transition-colors">
                     <td className="p-3 font-medium text-foreground">{bd.bankName}</td>
-                    <td className="p-3 text-foreground">{bd.ifscCode}</td>
+                    <td className="p-3 font-mono text-foreground">{bd.ifscCode}</td>
                     <td className="p-3 text-foreground">{bd.taluka}</td>
                     <td className="p-3 text-foreground">{bd.district}</td>
                     <td className="p-3">
@@ -122,7 +122,7 @@ export default function BankDetailsPage() {
       <BankDetailForm
         open={showForm}
         bankDetail={editBankDetail}
-        onClose={handleClose}
+        onOpenChange={handleOpenChange}
       />
     </div>
   );

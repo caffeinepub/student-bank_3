@@ -42,9 +42,11 @@ export const Transaction = IDL.Record({
   'transactionType' : IDL.Text,
   'studentName' : IDL.Text,
   'date' : Time,
+  'totalAmount' : IDL.Nat,
   'runningBalance' : IDL.Nat,
   'accountNumber' : IDL.Text,
   'amount' : IDL.Nat,
+  'previousBalance' : IDL.Nat,
   'reason' : IDL.Text,
 });
 export const UserProfile = IDL.Record({
@@ -157,9 +159,11 @@ export const idlFactory = ({ IDL }) => {
     'transactionType' : IDL.Text,
     'studentName' : IDL.Text,
     'date' : Time,
+    'totalAmount' : IDL.Nat,
     'runningBalance' : IDL.Nat,
     'accountNumber' : IDL.Text,
     'amount' : IDL.Nat,
+    'previousBalance' : IDL.Nat,
     'reason' : IDL.Text,
   });
   const UserProfile = IDL.Record({
