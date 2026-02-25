@@ -1,0 +1,18 @@
+{
+  "frontend/src/App.tsx": "Root app component wrapped with QueryClientProvider, AuthProvider, and Toaster; renders LoginPage when unauthenticated or DashboardLayout with role-based page routing when authenticated.",
+  "frontend/src/pages/HistoryPage.tsx": "Admin-only history search page with account number and date range filters; fixed conflicting `text-foreground`/`text-muted-foreground` classnames and replaced `flex-shrink-0` with `shrink-0` throughout.",
+  "frontend/src/pages/PassbookPage.tsx": "Passbook print page accessible by both admin and users; shows complete student info, bank info, and all transactions in a passbook-style layout with a Print button; users are restricted to viewing only their own account.",
+  "frontend/src/components/BankDetailForm.tsx": "Modal form for adding/editing bank detail records with 4 fields, validation, visible error display from mutation errors, loading spinner, and closes only on successful save.",
+  "frontend/src/pages/BankDetailsPage.tsx": "Bank details management page with data table, search, add/edit/delete functionality; passes `open={showForm}` to `BankDetailForm` so the dialog renders correctly.",
+  "frontend/src/pages/LoginPage.tsx": "Login page that properly `await`s the async `login()` call and passes `loginType` as the third `role` argument, with error handling in a try/finally block.",
+  "frontend/src/components/Sidebar.tsx": "Collapsible sidebar navigation with role-based menu items and user info; replaced all `flex-shrink-0` with `shrink-0` for Tailwind v3 compliance.",
+  "frontend/src/components/DashboardLayout.tsx": "Main dashboard shell with sidebar, top bar, and page content area; replaced `flex-shrink-0` with `shrink-0` on the header element.",
+  "frontend/src/components/StudentForm.tsx": "Modal form for adding/editing student records with 7 fields, validation, visible error display from mutation errors, loading spinner on submit button, and closes only on successful save.",
+  "frontend/src/components/AccountForm.tsx": "Modal form for adding/editing bank accounts with student and IFSC dropdowns, auto-fill bank name, visible error display from mutation errors, loading spinner, and closes only on successful save.",
+  "frontend/src/pages/StudentPage.tsx": "Admin-only student management page with data table, search, add/edit/delete functionality; passes `open={showForm}` to `StudentForm` so the dialog renders correctly.",
+  "frontend/src/pages/AccountPage.tsx": "Admin-only account management page with data table, search, add/edit/delete functionality; passes `open={showForm}` to `AccountForm` so the dialog renders correctly.",
+  "frontend/src/pages/HomePage.tsx": "Admin-only dashboard home page with 5 colorful stat cards and recent transactions list; replaced `flex-shrink-0` with `shrink-0`.",
+  "frontend/src/hooks/useAuth.ts": "Auth context provider with `isAdmin` and `isUser` computed properties restored in `AuthContextType`; handles admin login via Internet Identity and user login via account-number matching, persisting session to localStorage.",
+  "frontend/src/hooks/useQueries.ts": "Complete React Query hooks for all backend operations (students, accounts, transactions, bank details, user profile) with robust error handling that extracts error messages, proper cache invalidation on success, and actor availability checks in every mutation.",
+  "frontend/src/pages/TransactionPage.tsx": "Transaction management page with a form to add new transactions (account selector, type, amount, reason), visible success/error messages, loading state, and a table showing transactions for the selected account that updates automatically after a new transaction is added."
+}

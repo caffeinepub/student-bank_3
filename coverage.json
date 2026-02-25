@@ -1,0 +1,75 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-25T07:39:42.528Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 3,
+    "implemented": 2,
+    "items": [
+      {
+        "id": "REQ-21",
+        "summary": "Fix the backend Motoko actor so that all write operations (addStudent, updateStudent, deleteStudent, addAccount, updateAccount, deleteAccount, addTransaction, addBankDetail, updateBankDetail, deleteBankDetail) correctly persist data to stable storage and survive canister upgrades. Ensure no write is silently dropped or lost.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-22",
+        "summary": "Fix the frontend mutation hooks in useQueries.ts to use an authenticated actor (not anonymous) when the admin is logged in. Each mutation must call the correct backend update method, await the response, handle any returned error variants, and invalidate the relevant React Query cache on success so the UI reflects persisted data without a manual refresh.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/StudentForm.tsx",
+          "frontend/src/components/AccountForm.tsx",
+          "frontend/src/pages/TransactionPage.tsx",
+          "frontend/src/components/BankDetailForm.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/StudentForm.tsx",
+          "frontend/src/components/AccountForm.tsx",
+          "frontend/src/pages/TransactionPage.tsx",
+          "frontend/src/components/BankDetailForm.tsx"
+        ]
+      },
+      {
+        "id": "REQ-23",
+        "summary": "Ensure the useActor hook correctly initialises and returns an authenticated actor whenever the admin session is active in localStorage, so that canister update calls made after admin login are signed with a valid identity and not rejected by the backend's role-based access control.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useAuth.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useAuth.ts"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AccountForm.tsx",
+    "frontend/src/components/BankDetailForm.tsx",
+    "frontend/src/components/StudentForm.tsx",
+    "frontend/src/hooks/useAuth.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AccountPage.tsx",
+    "frontend/src/pages/BankDetailsPage.tsx",
+    "frontend/src/pages/LoginPage.tsx",
+    "frontend/src/pages/StudentPage.tsx",
+    "frontend/src/pages/TransactionPage.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

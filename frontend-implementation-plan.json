@@ -1,0 +1,62 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Fix frontend data persistence: ensure mutations use authenticated actor and invalidate caches correctly",
+  "requirements": [
+    {
+      "id": "REQ-22",
+      "summary": "Fix frontend mutation hooks to use authenticated actor and properly handle responses with cache invalidation",
+      "acceptanceCriteria": [
+        "The actor used inside every useMutation call is the authenticated actor from useActor, not a default anonymous actor.",
+        "Submitting the Student form as admin saves the record and the Student table updates without a manual page refresh.",
+        "Submitting the Account form as admin saves the record and the Account table updates without a manual page refresh.",
+        "Submitting the Transaction form as admin saves the record and the Transaction table updates without a manual page refresh.",
+        "Adding/editing/deleting a Bank Detail as admin persists and the Bank Details table updates without a manual page refresh.",
+        "No silent failures — if a backend call returns an error, a user-visible error message is shown."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Update all mutation hooks (useAddStudent, useUpdateStudent, useDeleteStudent, useAddAccount, useUpdateAccount, useDeleteAccount, useAddTransaction, useAddBankDetail, useUpdateBankDetail, useDeleteBankDetail) to: (1) use the authenticated actor from useActor() inside the mutationFn instead of any default/anonymous actor, (2) await backend responses and check for error variants or thrown errors, (3) call queryClient.invalidateQueries for the relevant cache keys on success (e.g., ['students'] for student mutations, ['accounts'] for account mutations, ['transactions'] and ['transactions', accountNumber] for transaction mutations, ['bankDetails'] for bank detail mutations), and (4) throw or return structured errors so useMutation's onError callback can display them to the user."
+        },
+        {
+          "path": "frontend/src/components/StudentForm.tsx",
+          "operation": "modify",
+          "description": "Update the StudentForm to display error messages from mutation.error when the backend call fails. Ensure the form uses the corrected useAddStudent and useUpdateStudent hooks from useQueries.ts and shows a visible error toast or inline error message if mutation.isError is true."
+        },
+        {
+          "path": "frontend/src/components/AccountForm.tsx",
+          "operation": "modify",
+          "description": "Update the AccountForm to display error messages from mutation.error when the backend call fails. Ensure the form uses the corrected useAddAccount and useUpdateAccount hooks from useQueries.ts and shows a visible error toast or inline error message if mutation.isError is true."
+        },
+        {
+          "path": "frontend/src/pages/TransactionPage.tsx",
+          "operation": "modify",
+          "description": "Update the TransactionPage to display error messages from the useAddTransaction mutation when the backend call fails. Ensure the transaction form shows a visible error toast or inline error message if mutation.isError is true, and that the transaction history list updates without manual refresh after a successful transaction is added."
+        },
+        {
+          "path": "frontend/src/components/BankDetailForm.tsx",
+          "operation": "modify",
+          "description": "Update the BankDetailForm to display error messages from mutation.error when the backend call fails. Ensure the form uses the corrected useAddBankDetail and useUpdateBankDetail hooks from useQueries.ts and shows a visible error toast or inline error message if mutation.isError is true."
+        }
+      ]
+    },
+    {
+      "id": "REQ-23",
+      "summary": "Ensure useActor hook returns an authenticated actor when admin session is active in localStorage",
+      "acceptanceCriteria": [
+        "When admin is logged in (session present in localStorage), the actor returned by useActor is authenticated and can successfully call update methods on the canister.",
+        "When no session is present (logged out), an anonymous actor is used for read-only query calls.",
+        "Actor identity is refreshed/invalidated when the session changes (login or logout)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useAuth.ts",
+          "operation": "modify",
+          "description": "Ensure the useAuth hook correctly stores and retrieves admin session state in localStorage with a consistent key (e.g., 'adminSession'). When the admin logs in via the hardcoded admin/admin flow, set a session object in localStorage that the useActor hook can detect. When the admin logs out, remove the session from localStorage and trigger a re-render so useActor can switch to an anonymous actor."
+        }
+      ]
+    }
+  ]
+}
