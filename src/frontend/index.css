@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 0.75rem;
+
+        /* Vibrant Student Bank palette - greens, oranges, teals */
+        --background: 0.97 0.008 200;
+        --foreground: 0.18 0.04 240;
+
+        --card: 1 0 0;
+        --card-foreground: 0.18 0.04 240;
+
+        --popover: 1 0 0;
+        --popover-foreground: 0.18 0.04 240;
+
+        /* Primary: Deep teal-green */
+        --primary: 0.42 0.14 175;
+        --primary-foreground: 1 0 0;
+
+        /* Secondary: Warm orange */
+        --secondary: 0.72 0.18 55;
+        --secondary-foreground: 1 0 0;
+
+        --muted: 0.94 0.01 200;
+        --muted-foreground: 0.52 0.03 220;
+
+        /* Accent: Bright teal */
+        --accent: 0.62 0.16 195;
+        --accent-foreground: 1 0 0;
+
+        --destructive: 0.58 0.22 25;
+        --destructive-foreground: 1 0 0;
+
+        --border: 0.88 0.02 200;
+        --input: 0.92 0.015 200;
+        --ring: 0.42 0.14 175;
+
+        /* Chart colors */
+        --chart-1: 0.62 0.18 145;
+        --chart-2: 0.72 0.18 55;
+        --chart-3: 0.55 0.16 195;
+        --chart-4: 0.65 0.2 30;
+        --chart-5: 0.48 0.14 270;
+
+        /* Sidebar */
+        --sidebar: 0.18 0.06 230;
+        --sidebar-foreground: 0.95 0.01 200;
+        --sidebar-primary: 0.62 0.18 145;
+        --sidebar-primary-foreground: 1 0 0;
+        --sidebar-accent: 0.28 0.06 230;
+        --sidebar-accent-foreground: 0.95 0.01 200;
+        --sidebar-border: 0.28 0.06 230;
+        --sidebar-ring: 0.62 0.18 145;
+    }
+
+    .dark {
+        --background: 0.14 0.04 230;
+        --foreground: 0.95 0.01 200;
+        --card: 0.2 0.05 230;
+        --card-foreground: 0.95 0.01 200;
+        --popover: 0.22 0.05 230;
+        --popover-foreground: 0.95 0.01 200;
+        --primary: 0.62 0.18 145;
+        --primary-foreground: 0.1 0.02 230;
+        --secondary: 0.72 0.18 55;
+        --secondary-foreground: 0.1 0.02 230;
+        --muted: 0.25 0.04 230;
+        --muted-foreground: 0.65 0.03 220;
+        --accent: 0.55 0.16 195;
+        --accent-foreground: 0.1 0.02 230;
+        --destructive: 0.65 0.22 25;
+        --destructive-foreground: 1 0 0;
+        --border: 0.28 0.04 230;
+        --input: 0.28 0.04 230;
+        --ring: 0.62 0.18 145;
+        --sidebar: 0.12 0.04 230;
+        --sidebar-foreground: 0.95 0.01 200;
+        --sidebar-primary: 0.62 0.18 145;
+        --sidebar-primary-foreground: 1 0 0;
+        --sidebar-accent: 0.22 0.05 230;
+        --sidebar-accent-foreground: 0.95 0.01 200;
+        --sidebar-border: 0.22 0.05 230;
+        --sidebar-ring: 0.62 0.18 145;
+    }
+
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+}
