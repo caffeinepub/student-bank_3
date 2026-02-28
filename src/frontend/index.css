@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -54,6 +56,18 @@
         --sidebar-accent-foreground: 0.95 0.01 200;
         --sidebar-border: 0.28 0.06 230;
         --sidebar-ring: 0.62 0.18 145;
+
+        /* Custom gradient tokens */
+        --grad-green-start: oklch(0.62 0.18 145);
+        --grad-green-end: oklch(0.48 0.16 175);
+        --grad-orange-start: oklch(0.78 0.2 55);
+        --grad-orange-end: oklch(0.65 0.22 35);
+        --grad-teal-start: oklch(0.62 0.16 195);
+        --grad-teal-end: oklch(0.48 0.14 215);
+        --grad-purple-start: oklch(0.62 0.18 290);
+        --grad-purple-end: oklch(0.48 0.16 270);
+        --grad-red-start: oklch(0.65 0.22 25);
+        --grad-red-end: oklch(0.52 0.2 15);
     }
 
     .dark {
@@ -89,7 +103,122 @@
     * {
         @apply border-border;
     }
+
     body {
         @apply bg-background text-foreground;
+        font-family: 'Nunito', sans-serif;
     }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins', sans-serif;
+    }
+}
+
+@layer utilities {
+    .gradient-green {
+        background: linear-gradient(135deg, oklch(0.62 0.18 145), oklch(0.48 0.16 175));
+    }
+    .gradient-orange {
+        background: linear-gradient(135deg, oklch(0.78 0.2 55), oklch(0.65 0.22 35));
+    }
+    .gradient-teal {
+        background: linear-gradient(135deg, oklch(0.62 0.16 195), oklch(0.48 0.14 215));
+    }
+    .gradient-purple {
+        background: linear-gradient(135deg, oklch(0.62 0.18 290), oklch(0.48 0.16 270));
+    }
+    .gradient-red {
+        background: linear-gradient(135deg, oklch(0.65 0.22 25), oklch(0.52 0.2 15));
+    }
+    .gradient-sidebar {
+        background: linear-gradient(180deg, oklch(0.18 0.08 240), oklch(0.14 0.06 250));
+    }
+    .gradient-login {
+        background: linear-gradient(135deg, oklch(0.18 0.08 240) 0%, oklch(0.28 0.1 200) 50%, oklch(0.22 0.08 175) 100%);
+    }
+    .card-shadow {
+        box-shadow: 0 4px 20px -4px rgba(0,0,0,0.15), 0 2px 8px -2px rgba(0,0,0,0.1);
+    }
+    .card-shadow-lg {
+        box-shadow: 0 8px 32px -8px rgba(0,0,0,0.2), 0 4px 16px -4px rgba(0,0,0,0.12);
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .print-only {
+        display: block !important;
+    }
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12px !important;
+    }
+    /* Ensure all table columns are visible on print */
+    table td, table th {
+        display: table-cell !important;
+    }
+    /* Ensure passbook/history tables show all rows */
+    .passbook-table, .history-table {
+        width: 100% !important;
+        font-size: 11px !important;
+    }
+    .passbook-table td, .passbook-table th,
+    .history-table td, .history-table th {
+        padding: 4px 6px !important;
+        display: table-cell !important;
+    }
+    /* Avoid page breaks inside rows */
+    tr {
+        page-break-inside: avoid;
+    }
+    /* Ensure background colors print */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+
+.print-only {
+    display: none;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: oklch(0.7 0.05 200);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.55 0.08 200);
+}
+
+/* Smooth transitions */
+* {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
 }

@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAddBankDetail, useUpdateBankDetail } from '../hooks/useQueries';
-import type { BankDetail } from '../backend';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import type { BankDetail } from "../backend";
+import { useAddBankDetail, useUpdateBankDetail } from "../hooks/useQueries";
 
 interface BankDetailFormProps {
   open: boolean;
@@ -19,17 +19,22 @@ interface BankDetailFormProps {
   bankDetail?: BankDetail | null;
 }
 
-export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankDetailFormProps) {
+export default function BankDetailForm({
+  open,
+  onOpenChange,
+  bankDetail,
+}: BankDetailFormProps) {
   const addBankDetail = useAddBankDetail();
   const updateBankDetail = useUpdateBankDetail();
 
   const [form, setForm] = useState({
-    bankName: '',
-    taluka: '',
-    district: '',
-    ifscCode: '',
+    bankName: "",
+    taluka: "",
+    district: "",
+    ifscCode: "",
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset form when dialog opens/closes
   useEffect(() => {
     if (bankDetail) {
       setForm({
@@ -39,7 +44,7 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
         ifscCode: bankDetail.ifscCode,
       });
     } else {
-      setForm({ bankName: '', taluka: '', district: '', ifscCode: '' });
+      setForm({ bankName: "", taluka: "", district: "", ifscCode: "" });
     }
   }, [bankDetail, open]);
 
@@ -49,7 +54,7 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
     e.preventDefault();
 
     if (!form.bankName.trim() || !form.ifscCode.trim()) {
-      toast.error('बँकेचे नाव आणि IFSC Code आवश्यक आहे');
+      toast.error("बँकेचे नाव आणि IFSC Code आवश्यक आहे");
       return;
     }
 
@@ -63,14 +68,15 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
     try {
       if (bankDetail) {
         await updateBankDetail.mutateAsync(payload);
-        toast.success('बँक माहिती यशस्वीरित्या अपडेट झाली!');
+        toast.success("बँक माहिती यशस्वीरित्या अपडेट झाली!");
       } else {
         await addBankDetail.mutateAsync(payload);
-        toast.success('बँक माहिती यशस्वीरित्या जोडली गेली!');
+        toast.success("बँक माहिती यशस्वीरित्या जोडली गेली!");
       }
       onOpenChange(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'माहिती save होऊ शकली नाही';
+      const msg =
+        err instanceof Error ? err.message : "माहिती save होऊ शकली नाही";
       toast.error(`Error: ${msg}`);
       // Do NOT close dialog on error — let user retry
     }
@@ -84,7 +90,9 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{bankDetail ? 'बँक माहिती बदला' : 'नवीन बँक जोडा'}</DialogTitle>
+          <DialogTitle>
+            {bankDetail ? "बँक माहिती बदला" : "नवीन बँक जोडा"}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,7 +101,7 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
             <Input
               id="bankName"
               value={form.bankName}
-              onChange={(e) => handleChange('bankName', e.target.value)}
+              onChange={(e) => handleChange("bankName", e.target.value)}
               placeholder="बँकेचे नाव"
               required
             />
@@ -104,7 +112,9 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
             <Input
               id="ifscCode"
               value={form.ifscCode}
-              onChange={(e) => handleChange('ifscCode', e.target.value.toUpperCase())}
+              onChange={(e) =>
+                handleChange("ifscCode", e.target.value.toUpperCase())
+              }
               placeholder="IFSC Code"
               disabled={!!bankDetail}
               required
@@ -116,7 +126,7 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
             <Input
               id="taluka"
               value={form.taluka}
-              onChange={(e) => handleChange('taluka', e.target.value)}
+              onChange={(e) => handleChange("taluka", e.target.value)}
               placeholder="तालुका"
             />
           </div>
@@ -126,7 +136,7 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
             <Input
               id="district"
               value={form.district}
-              onChange={(e) => handleChange('district', e.target.value)}
+              onChange={(e) => handleChange("district", e.target.value)}
               placeholder="जिल्हा"
             />
           </div>
@@ -142,12 +152,28 @@ export default function BankDetailForm({ open, onOpenChange, bankDetail }: BankD
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && (
-                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                <svg
+                  aria-hidden="true"
+                  className="animate-spin h-4 w-4 mr-2"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
                 </svg>
               )}
-              {isLoading ? 'Save होत आहे...' : bankDetail ? 'अपडेट करा' : 'जोडा'}
+              {isLoading ? "Save होत आहे..." : bankDetail ? "अपडेट करा" : "जोडा"}
             </Button>
           </DialogFooter>
         </form>

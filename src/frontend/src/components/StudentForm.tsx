@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAddStudent, useUpdateStudent } from '../hooks/useQueries';
-import type { Student } from '../backend';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import type { Student } from "../backend";
+import { useAddStudent, useUpdateStudent } from "../hooks/useQueries";
 
 interface StudentFormProps {
   open: boolean;
@@ -19,20 +19,25 @@ interface StudentFormProps {
   student?: Student | null;
 }
 
-export default function StudentForm({ open, onOpenChange, student }: StudentFormProps) {
+export default function StudentForm({
+  open,
+  onOpenChange,
+  student,
+}: StudentFormProps) {
   const addStudent = useAddStudent();
   const updateStudent = useUpdateStudent();
 
   const [form, setForm] = useState({
-    name: '',
-    dateOfBirth: '',
-    className: '',
-    attendanceNumber: '',
-    schoolName: '',
-    taluka: '',
-    district: '',
+    name: "",
+    dateOfBirth: "",
+    className: "",
+    attendanceNumber: "",
+    schoolName: "",
+    taluka: "",
+    district: "",
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset form when dialog opens/closes
   useEffect(() => {
     if (student) {
       setForm({
@@ -46,13 +51,13 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
       });
     } else {
       setForm({
-        name: '',
-        dateOfBirth: '',
-        className: '',
-        attendanceNumber: '',
-        schoolName: '',
-        taluka: '',
-        district: '',
+        name: "",
+        dateOfBirth: "",
+        className: "",
+        attendanceNumber: "",
+        schoolName: "",
+        taluka: "",
+        district: "",
       });
     }
   }, [student, open]);
@@ -62,8 +67,13 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name.trim() || !form.dateOfBirth || !form.className.trim() || !form.attendanceNumber) {
-      toast.error('कृपया सर्व आवश्यक माहिती भरा');
+    if (
+      !form.name.trim() ||
+      !form.dateOfBirth ||
+      !form.className.trim() ||
+      !form.attendanceNumber
+    ) {
+      toast.error("कृपया सर्व आवश्यक माहिती भरा");
       return;
     }
 
@@ -71,7 +81,7 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
       name: form.name.trim(),
       dateOfBirth: form.dateOfBirth,
       className: form.className.trim(),
-      attendanceNumber: parseInt(form.attendanceNumber, 10),
+      attendanceNumber: Number.parseInt(form.attendanceNumber, 10),
       schoolName: form.schoolName.trim(),
       taluka: form.taluka.trim(),
       district: form.district.trim(),
@@ -80,14 +90,15 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
     try {
       if (student) {
         await updateStudent.mutateAsync({ id: Number(student.id), ...payload });
-        toast.success('विद्यार्थी माहिती यशस्वीरित्या अपडेट झाली!');
+        toast.success("विद्यार्थी माहिती यशस्वीरित्या अपडेट झाली!");
       } else {
         await addStudent.mutateAsync(payload);
-        toast.success('विद्यार्थी यशस्वीरित्या जोडला गेला!');
+        toast.success("विद्यार्थी यशस्वीरित्या जोडला गेला!");
       }
       onOpenChange(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'माहिती save होऊ शकली नाही';
+      const msg =
+        err instanceof Error ? err.message : "माहिती save होऊ शकली नाही";
       toast.error(`Error: ${msg}`);
       // Do NOT close dialog on error — let user retry
     }
@@ -101,7 +112,9 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{student ? 'विद्यार्थी माहिती बदला' : 'नवीन विद्यार्थी जोडा'}</DialogTitle>
+          <DialogTitle>
+            {student ? "विद्यार्थी माहिती बदला" : "नवीन विद्यार्थी जोडा"}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,7 +124,7 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
               <Input
                 id="name"
                 value={form.name}
-                onChange={(e) => handleChange('name', e.target.value)}
+                onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="विद्यार्थ्याचे नाव"
                 required
               />
@@ -123,7 +136,7 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
                 id="dateOfBirth"
                 type="date"
                 value={form.dateOfBirth}
-                onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+                onChange={(e) => handleChange("dateOfBirth", e.target.value)}
                 required
               />
             </div>
@@ -133,7 +146,7 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
               <Input
                 id="className"
                 value={form.className}
-                onChange={(e) => handleChange('className', e.target.value)}
+                onChange={(e) => handleChange("className", e.target.value)}
                 placeholder="उदा. 5वी"
                 required
               />
@@ -146,7 +159,9 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
                 type="number"
                 min="1"
                 value={form.attendanceNumber}
-                onChange={(e) => handleChange('attendanceNumber', e.target.value)}
+                onChange={(e) =>
+                  handleChange("attendanceNumber", e.target.value)
+                }
                 placeholder="हजेरी क्रमांक"
                 required
               />
@@ -157,7 +172,7 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
               <Input
                 id="schoolName"
                 value={form.schoolName}
-                onChange={(e) => handleChange('schoolName', e.target.value)}
+                onChange={(e) => handleChange("schoolName", e.target.value)}
                 placeholder="शाळेचे नाव"
               />
             </div>
@@ -167,7 +182,7 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
               <Input
                 id="taluka"
                 value={form.taluka}
-                onChange={(e) => handleChange('taluka', e.target.value)}
+                onChange={(e) => handleChange("taluka", e.target.value)}
                 placeholder="तालुका"
               />
             </div>
@@ -177,7 +192,7 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
               <Input
                 id="district"
                 value={form.district}
-                onChange={(e) => handleChange('district', e.target.value)}
+                onChange={(e) => handleChange("district", e.target.value)}
                 placeholder="जिल्हा"
               />
             </div>
@@ -194,12 +209,28 @@ export default function StudentForm({ open, onOpenChange, student }: StudentForm
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && (
-                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                <svg
+                  aria-hidden="true"
+                  className="animate-spin h-4 w-4 mr-2"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
                 </svg>
               )}
-              {isLoading ? 'Save होत आहे...' : student ? 'अपडेट करा' : 'जोडा'}
+              {isLoading ? "Save होत आहे..." : student ? "अपडेट करा" : "जोडा"}
             </Button>
           </DialogFooter>
         </form>

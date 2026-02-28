@@ -1,35 +1,47 @@
 # Student Bank
 
 ## Current State
-- Full Student Bank app with login, dashboard, student, account, transaction, history, passbook, bank details pages
-- Transaction page supports add and delete
-- Colors/theme are defined in src/frontend/src/index.css with OKLCH palette (teal, orange, green)
-- Logo exists at /assets/generated/bank-logo.dim_256x256.png
-- The root-level frontend/index.css has overwritten the color theme with a plain gray palette, causing colors to disappear
-- No `updateTransaction` backend function exists
+- PassbookPage shows passbook with student/account info and transaction table, but print layout is incomplete — transactions are truncated/missing on print, "Reason" column is hidden on small screens but also hidden on print.
+- HistoryPage has print and download CSV, but print layout is missing full student/bank/account details in the printed output; all transactions may not appear.
+- Footer on all pages shows "Built with ❤️ using caffeine.ai · © Student Bank".
+- No PDF download option in PassbookPage.
+- `hidden sm:table-cell` causes Reason column to be invisible on print.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `updateTransaction` backend function to allow editing transaction date, type, amount, reason
-- Transaction edit button in the table (admin only) with pre-filled edit form
-- Edit/Update mutation hook in useQueries.ts
+- PDF/print download button in PassbookPage (using window.print with proper @media print styles).
+- Comprehensive `@media print` CSS: ensure all table columns including Reason are visible in print, force table to show all rows, hide browser UI artifacts.
+- A complete print-header in PassbookPage showing: bank name, school name, student full details, account details, then full transaction table with all rows and all columns.
+- A complete print-header in HistoryPage showing: Student Bank header, student details, account/bank details, date range, then full transaction table with all columns.
+- "vaibhavgavali" credit text in footers of all pages.
 
 ### Modify
-- Fix the root-level `src/frontend/index.css` — restore the proper OKLCH vibrant color theme (it currently has a plain gray palette that overrides the correct one)
-- TransactionPage.tsx — add Edit button alongside Delete, add edit mode to the form, show "Update" button when editing
+- PassbookPage footer: replace "Built with ❤️ using caffeine.ai" with "vaibhavgavali".
+- HistoryPage footer: replace "Built with ❤️ using caffeine.ai" with "vaibhavgavali".
+- All other page footers (HomePage, StudentPage, AccountPage, TransactionPage, BankDetailsPage): same footer replacement.
+- PassbookPage transaction table: remove `hidden sm:table-cell` from Reason column so it appears on print.
+- HistoryPage transaction table: remove `hidden sm:table-cell` from Reason column so it appears on print.
+- Print CSS: ensure `.print-only` blocks are `display: block` and `.no-print` hidden during print, table cells visible.
 
 ### Remove
-- Nothing
+- "❤️ using caffeine" text from all page footers.
 
 ## Implementation Plan
-1. Regenerate backend with updateTransaction function added
-2. Add useUpdateTransaction hook in useQueries.ts
-3. Update TransactionPage.tsx to support edit mode: edit button in table, pre-fill form, submit updates existing transaction
-4. Fix root-level index.css to match the vibrant OKLCH theme from src/frontend/src/index.css
-5. Verify logo path is correct and referenced consistently
+1. Update PassbookPage.tsx:
+   - Fix print area: add full print header (Student Bank title, student info, account & bank info all in print-visible divs).
+   - Remove `hidden sm:table-cell` from Reason column in transaction table.
+   - Add Download PDF button (triggers window.print).
+   - Update footer text to "vaibhavgavali".
 
-## UX Notes
-- Edit button: pencil icon (Pencil from lucide-react), next to delete button in transaction table (admin only)
-- When edit clicked: form scrolls to top and shows pre-filled data, submit button changes to "व्यवहार अपडेट करा", cancel button appears
-- Colors: restore teal-green sidebar, colorful gradient cards, vibrant primary theme
+2. Update HistoryPage.tsx:
+   - Enhance print header to include full student, account, bank details.
+   - Remove `hidden sm:table-cell` from Reason column.
+   - Update footer text to "vaibhavgavali".
+
+3. Update all other pages (HomePage, StudentPage, AccountPage, TransactionPage, BankDetailsPage):
+   - Replace footer text with "vaibhavgavali".
+
+4. Update index.css print styles:
+   - Ensure `table-cell` visibility for print (override `hidden sm:table-cell`).
+   - Ensure all transaction rows show on print (no truncation).

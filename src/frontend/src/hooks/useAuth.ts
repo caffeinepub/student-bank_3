@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, createElement } from 'react';
-import type { ReactNode } from 'react';
-import { useInternetIdentity } from './useInternetIdentity';
+import { createContext, createElement, useContext, useState } from "react";
+import type { ReactNode } from "react";
+import { useInternetIdentity } from "./useInternetIdentity";
 
-export type AuthRole = 'admin' | 'user' | 'guest';
+export type AuthRole = "admin" | "user" | "guest";
 
 interface AuthContextType {
   role: AuthRole;
@@ -10,7 +10,11 @@ interface AuthContextType {
   isUser: boolean;
   isAuthenticated: boolean;
   userAccountNumber: string | null;
-  login: (accountNumber: string, password: string, loginType: AuthRole) => Promise<boolean>;
+  login: (
+    accountNumber: string,
+    password: string,
+    loginType: AuthRole,
+  ) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -20,36 +24,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { login: iiLogin, clear: iiClear } = useInternetIdentity();
 
   const [role, setRole] = useState<AuthRole>(() => {
-    const saved = localStorage.getItem('auth_role');
-    return (saved as AuthRole) || 'guest';
+    const saved = localStorage.getItem("auth_role");
+    return (saved as AuthRole) || "guest";
   });
 
-  const [userAccountNumber, setUserAccountNumber] = useState<string | null>(() => {
-    return localStorage.getItem('auth_account_number');
-  });
+  const [userAccountNumber, setUserAccountNumber] = useState<string | null>(
+    () => {
+      return localStorage.getItem("auth_account_number");
+    },
+  );
 
-  const isAuthenticated = role !== 'guest';
-  const isAdmin = role === 'admin';
-  const isUser = role === 'user';
+  const isAuthenticated = role !== "guest";
+  const isAdmin = role === "admin";
+  const isUser = role === "user";
 
   const login = async (
     accountNumber: string,
     _password: string,
-    loginType: AuthRole
+    loginType: AuthRole,
   ): Promise<boolean> => {
-    if (loginType === 'admin') {
+    if (loginType === "admin") {
       // Must successfully complete II login before granting admin session
       // If iiLogin throws, the error propagates to the caller
       await iiLogin();
-      setRole('admin');
-      localStorage.setItem('auth_role', 'admin');
+      setRole("admin");
+      localStorage.setItem("auth_role", "admin");
       return true;
-    } else if (loginType === 'user') {
+    }
+    if (loginType === "user") {
       if (!accountNumber.trim()) return false;
-      setRole('user');
+      setRole("user");
       setUserAccountNumber(accountNumber.trim());
-      localStorage.setItem('auth_role', 'user');
-      localStorage.setItem('auth_account_number', accountNumber.trim());
+      localStorage.setItem("auth_role", "user");
+      localStorage.setItem("auth_account_number", accountNumber.trim());
       return true;
     }
     return false;
@@ -57,10 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     iiClear();
-    setRole('guest');
+    setRole("guest");
     setUserAccountNumber(null);
-    localStorage.removeItem('auth_role');
-    localStorage.removeItem('auth_account_number');
+    localStorage.removeItem("auth_role");
+    localStorage.removeItem("auth_account_number");
   };
 
   const value: AuthContextType = {
@@ -78,6 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }

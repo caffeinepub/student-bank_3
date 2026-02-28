@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import Sidebar, { type PageId } from './Sidebar';
-import { Menu } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { Menu } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import Sidebar, { type PageId } from "./Sidebar";
 
 interface DashboardLayoutProps {
   currentPage: PageId;
@@ -22,7 +23,10 @@ export default function DashboardLayout({
   const { isAdmin } = useAuth();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{ background: "oklch(0.97 0.008 200)" }}
+    >
       {/* Sidebar */}
       <Sidebar
         currentPage={currentPage}
@@ -33,32 +37,38 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Bar */}
-        <header className="shrink-0 bg-card border-b border-border px-4 py-3 flex items-center gap-3 no-print">
+        {/* Top Bar - colorful gradient header */}
+        <header
+          className="shrink-0 px-4 py-3 flex items-center gap-3 no-print shadow-md"
+          style={{
+            background: isAdmin
+              ? "linear-gradient(135deg, oklch(0.28 0.10 240), oklch(0.20 0.08 210))"
+              : "linear-gradient(135deg, oklch(0.65 0.20 35), oklch(0.50 0.18 20))",
+          }}
+        >
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-xl hover:bg-muted transition-colors text-foreground"
+            className="lg:hidden p-2 rounded-xl transition-colors text-white/80 hover:text-white hover:bg-white/10"
           >
             <Menu className="w-5 h-5" />
           </button>
 
           <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-foreground text-lg font-heading leading-tight truncate">
+            <h1 className="font-bold text-white text-lg font-heading leading-tight truncate drop-shadow">
               {pageTitle}
             </h1>
             {pageSubtitle && (
-              <p className="text-muted-foreground text-xs truncate">{pageSubtitle}</p>
+              <p className="text-white/60 text-xs truncate">{pageSubtitle}</p>
             )}
           </div>
 
           <div className="flex items-center gap-2">
             <div
-              className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
-                isAdmin ? 'gradient-green' : 'gradient-orange'
-              }`}
+              className="px-3 py-1 rounded-full text-xs font-bold text-white border border-white/20"
+              style={{ background: "rgba(255,255,255,0.15)" }}
             >
-              {isAdmin ? 'Admin' : 'User'}
+              {isAdmin ? "🔑 Admin" : "👤 User"}
             </div>
           </div>
         </header>

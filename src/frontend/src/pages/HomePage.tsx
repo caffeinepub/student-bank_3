@@ -1,7 +1,18 @@
-import React from 'react';
-import { useGetAllStudents, useGetAllAccounts, useGetAllTransactions } from '../hooks/useQueries';
-import { Users, CreditCard, TrendingUp, TrendingDown, Wallet, RefreshCw } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CreditCard,
+  RefreshCw,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  Wallet,
+} from "lucide-react";
+import type React from "react";
+import {
+  useGetAllAccounts,
+  useGetAllStudents,
+  useGetAllTransactions,
+} from "../hooks/useQueries";
 
 function StatCard({
   title,
@@ -19,7 +30,9 @@ function StatCard({
   isLoading: boolean;
 }) {
   return (
-    <div className={`${gradient} rounded-2xl p-5 text-white card-shadow relative overflow-hidden`}>
+    <div
+      className={`${gradient} rounded-2xl p-5 text-white card-shadow relative overflow-hidden`}
+    >
       <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-white/10 -translate-y-8 translate-x-8" />
       <div className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-white/5 translate-y-6 -translate-x-6" />
       <div className="relative">
@@ -41,60 +54,70 @@ function StatCard({
 }
 
 export default function HomePage() {
-  const { data: students = [], isLoading: studentsLoading } = useGetAllStudents();
-  const { data: accounts = [], isLoading: accountsLoading } = useGetAllAccounts();
-  const { data: transactions = [], isLoading: txLoading, refetch } = useGetAllTransactions();
+  const { data: students = [], isLoading: studentsLoading } =
+    useGetAllStudents();
+  const { data: accounts = [], isLoading: accountsLoading } =
+    useGetAllAccounts();
+  const {
+    data: transactions = [],
+    isLoading: txLoading,
+    refetch,
+  } = useGetAllTransactions();
 
   const isLoading = studentsLoading || accountsLoading || txLoading;
 
   const totalDeposits = transactions
-    .filter((t) => t.transactionType === 'Deposit')
+    .filter((t) => t.transactionType === "Deposit")
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const totalWithdrawals = transactions
-    .filter((t) => t.transactionType === 'Withdrawal')
+    .filter((t) => t.transactionType === "Withdrawal")
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
-  const totalInitialAmount = accounts.reduce((sum, a) => sum + Number(a.initialAmount), 0);
+  const totalInitialAmount = accounts.reduce(
+    (sum, a) => sum + Number(a.initialAmount),
+    0,
+  );
   const balance = totalInitialAmount + totalDeposits - totalWithdrawals;
 
-  const formatCurrency = (amount: number) => `₹${amount.toLocaleString('en-IN')}`;
+  const formatCurrency = (amount: number) =>
+    `₹${amount.toLocaleString("en-IN")}`;
 
   const stats = [
     {
-      title: 'Total Students',
-      titleMr: 'एकूण विद्यार्थी',
+      title: "Total Students",
+      titleMr: "एकूण विद्यार्थी",
       value: students.length.toString(),
       icon: <Users className="w-6 h-6 text-white" />,
-      gradient: 'gradient-teal',
+      gradient: "gradient-teal",
     },
     {
-      title: 'Total Accounts',
-      titleMr: 'एकूण खाते',
+      title: "Total Accounts",
+      titleMr: "एकूण खाते",
       value: accounts.length.toString(),
       icon: <CreditCard className="w-6 h-6 text-white" />,
-      gradient: 'gradient-green',
+      gradient: "gradient-green",
     },
     {
-      title: 'Total Deposits',
-      titleMr: 'एकूण जमा रक्कम',
+      title: "Total Deposits",
+      titleMr: "एकूण जमा रक्कम",
       value: formatCurrency(totalDeposits),
       icon: <TrendingUp className="w-6 h-6 text-white" />,
-      gradient: 'gradient-orange',
+      gradient: "gradient-orange",
     },
     {
-      title: 'Total Withdrawals',
-      titleMr: 'एकूण काढलेली रक्कम',
+      title: "Total Withdrawals",
+      titleMr: "एकूण काढलेली रक्कम",
       value: formatCurrency(totalWithdrawals),
       icon: <TrendingDown className="w-6 h-6 text-white" />,
-      gradient: 'gradient-red',
+      gradient: "gradient-red",
     },
     {
-      title: 'Current Balance',
-      titleMr: 'शिल्लक रक्कम',
+      title: "Current Balance",
+      titleMr: "शिल्लक रक्कम",
       value: formatCurrency(balance),
       icon: <Wallet className="w-6 h-6 text-white" />,
-      gradient: 'gradient-purple',
+      gradient: "gradient-purple",
     },
   ];
 
@@ -103,10 +126,13 @@ export default function HomePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold font-heading text-foreground">Dashboard Overview</h2>
+          <h2 className="text-xl font-bold font-heading text-foreground">
+            Dashboard Overview
+          </h2>
           <p className="text-muted-foreground text-sm">डॅशबोर्ड सारांश</p>
         </div>
         <button
+          type="button"
           onClick={() => refetch()}
           className="p-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
@@ -124,39 +150,54 @@ export default function HomePage() {
       {/* Recent Transactions */}
       {transactions.length > 0 && (
         <div className="bg-card rounded-2xl p-5 card-shadow border border-border">
-          <h3 className="font-bold text-foreground font-heading mb-4">Recent Transactions</h3>
+          <h3 className="font-bold text-foreground font-heading mb-4">
+            Recent Transactions
+          </h3>
           <div className="space-y-3">
             {transactions
               .slice(-5)
               .reverse()
               .map((t, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                <div
+                  key={`tx-${String(t.date)}-${t.accountNumber}-${i}`}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/50"
+                >
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                      t.transactionType === 'Deposit' ? 'gradient-green' : 'gradient-red'
+                      t.transactionType === "Deposit"
+                        ? "gradient-green"
+                        : "gradient-red"
                     }`}
                   >
-                    {t.transactionType === 'Deposit' ? (
+                    {t.transactionType === "Deposit" ? (
                       <TrendingUp className="w-4 h-4 text-white" />
                     ) : (
                       <TrendingDown className="w-4 h-4 text-white" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground truncate">{t.studentName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{t.reason || 'No reason'}</p>
+                    <p className="font-semibold text-sm text-foreground truncate">
+                      {t.studentName}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {t.reason || "No reason"}
+                    </p>
                   </div>
                   <div className="text-right shrink-0">
                     <p
                       className={`font-bold text-sm ${
-                        t.transactionType === 'Deposit' ? 'text-green-600' : 'text-red-500'
+                        t.transactionType === "Deposit"
+                          ? "text-green-600"
+                          : "text-red-500"
                       }`}
                     >
-                      {t.transactionType === 'Deposit' ? '+' : '-'}₹
-                      {Number(t.amount).toLocaleString('en-IN')}
+                      {t.transactionType === "Deposit" ? "+" : "-"}₹
+                      {Number(t.amount).toLocaleString("en-IN")}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(Number(t.date) / 1_000_000).toLocaleDateString('en-IN')}
+                      {new Date(Number(t.date) / 1_000_000).toLocaleDateString(
+                        "en-IN",
+                      )}
                     </p>
                   </div>
                 </div>

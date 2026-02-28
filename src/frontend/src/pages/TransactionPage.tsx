@@ -1,25 +1,3 @@
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { PlusCircle, Trash2, Pencil, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,22 +7,44 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  useGetAllAccounts,
-  useGetTransactionsByAccount,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Pencil, PlusCircle, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { Transaction } from "../backend";
+import { useAuth } from "../hooks/useAuth";
+import {
   useAddTransaction,
   useDeleteTransaction,
+  useGetAllAccounts,
+  useGetTransactionsByAccount,
   useUpdateTransaction,
-} from '../hooks/useQueries';
-import { useAuth } from '../hooks/useAuth';
-import type { Transaction } from '../backend';
+} from "../hooks/useQueries";
 
 function getTodayDateString() {
   const today = new Date();
   const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -52,8 +52,8 @@ function timestampToDateString(timestamp: bigint): string {
   const ms = Number(timestamp) / 1_000_000;
   const d = new Date(ms);
   const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -64,12 +64,12 @@ export default function TransactionPage() {
   const updateTransaction = useUpdateTransaction();
   const { isAdmin } = useAuth();
 
-  const [selectedAccount, setSelectedAccount] = useState('');
+  const [selectedAccount, setSelectedAccount] = useState("");
   const [form, setForm] = useState({
     date: getTodayDateString(),
-    transactionType: 'Deposit',
-    amount: '',
-    reason: '',
+    transactionType: "Deposit",
+    amount: "",
+    reason: "",
   });
 
   // Edit mode state
@@ -83,16 +83,18 @@ export default function TransactionPage() {
     useGetTransactionsByAccount(selectedAccount);
 
   // Compute previous balance from existing transactions + account initial amount
-  const selectedAccountData = accounts.find((a) => a.accountNumber === selectedAccount);
+  const selectedAccountData = accounts.find(
+    (a) => a.accountNumber === selectedAccount,
+  );
   const previousBalance = (() => {
     if (!selectedAccountData) return 0;
     let bal = Number(selectedAccountData.initialAmount);
     for (const tx of transactions) {
       // When editing, exclude the transaction being edited from balance calculation
       if (editingTx && tx.id === editingTx.id) continue;
-      if (tx.transactionType === 'Deposit') {
+      if (tx.transactionType === "Deposit") {
         bal += Number(tx.amount);
-      } else if (tx.transactionType === 'Withdrawal') {
+      } else if (tx.transactionType === "Withdrawal") {
         bal -= Number(tx.amount);
       }
     }
@@ -100,9 +102,9 @@ export default function TransactionPage() {
   })();
 
   // Compute total amount in real-time
-  const amountNum = parseInt(form.amount, 10) || 0;
+  const amountNum = Number.parseInt(form.amount, 10) || 0;
   const totalAmount =
-    form.transactionType === 'Deposit'
+    form.transactionType === "Deposit"
       ? previousBalance + amountNum
       : previousBalance - amountNum;
 
@@ -116,16 +118,16 @@ export default function TransactionPage() {
       reason: tx.reason,
     });
     // Scroll to top of form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCancelEdit = () => {
     setEditingTx(null);
     setForm({
       date: getTodayDateString(),
-      transactionType: 'Deposit',
-      amount: '',
-      reason: '',
+      transactionType: "Deposit",
+      amount: "",
+      reason: "",
     });
   };
 
@@ -133,15 +135,15 @@ export default function TransactionPage() {
     e.preventDefault();
 
     if (!selectedAccount) {
-      toast.error('कृपया खाते निवडा');
+      toast.error("कृपया खाते निवडा");
       return;
     }
-    if (!form.amount || parseInt(form.amount, 10) <= 0) {
-      toast.error('कृपया वैध रक्कम टाका');
+    if (!form.amount || Number.parseInt(form.amount, 10) <= 0) {
+      toast.error("कृपया वैध रक्कम टाका");
       return;
     }
     if (!form.reason.trim()) {
-      toast.error('कृपया कारण टाका');
+      toast.error("कृपया कारण टाका");
       return;
     }
 
@@ -151,14 +153,15 @@ export default function TransactionPage() {
         await updateTransaction.mutateAsync({
           transactionId: editingTx.id,
           transactionType: form.transactionType,
-          amount: parseInt(form.amount, 10),
+          amount: Number.parseInt(form.amount, 10),
           reason: form.reason.trim(),
           date: form.date,
         });
-        toast.success('व्यवहार यशस्वीरित्या अपडेट केला!');
+        toast.success("व्यवहार यशस्वीरित्या अपडेट केला!");
         handleCancelEdit();
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'व्यवहार अपडेट होऊ शकला नाही';
+        const msg =
+          err instanceof Error ? err.message : "व्यवहार अपडेट होऊ शकला नाही";
         toast.error(`Error: ${msg}`);
       }
     } else {
@@ -167,19 +170,20 @@ export default function TransactionPage() {
         await addTransaction.mutateAsync({
           accountNumber: selectedAccount,
           transactionType: form.transactionType,
-          amount: parseInt(form.amount, 10),
+          amount: Number.parseInt(form.amount, 10),
           reason: form.reason.trim(),
           date: form.date,
         });
-        toast.success('व्यवहार यशस्वीरित्या जोडला गेला!');
+        toast.success("व्यवहार यशस्वीरित्या जोडला गेला!");
         setForm((prev) => ({
           ...prev,
-          transactionType: 'Deposit',
-          amount: '',
-          reason: '',
+          transactionType: "Deposit",
+          amount: "",
+          reason: "",
         }));
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'व्यवहार save होऊ शकला नाही';
+        const msg =
+          err instanceof Error ? err.message : "व्यवहार save होऊ शकला नाही";
         toast.error(`Error: ${msg}`);
       }
     }
@@ -194,13 +198,14 @@ export default function TransactionPage() {
     if (pendingDeleteId === null) return;
     try {
       await deleteTransaction.mutateAsync(pendingDeleteId);
-      toast.success('व्यवहार यशस्वीरित्या डिलीट केला!');
+      toast.success("व्यवहार यशस्वीरित्या डिलीट केला!");
       // If we were editing this transaction, cancel edit mode
       if (editingTx && editingTx.id === pendingDeleteId) {
         handleCancelEdit();
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'व्यवहार डिलीट होऊ शकला नाही';
+      const msg =
+        err instanceof Error ? err.message : "व्यवहार डिलीट होऊ शकला नाही";
       toast.error(`Error: ${msg}`);
     } finally {
       setPendingDeleteId(null);
@@ -210,15 +215,15 @@ export default function TransactionPage() {
 
   const formatDate = (timestamp: bigint) => {
     const ms = Number(timestamp) / 1_000_000;
-    return new Date(ms).toLocaleDateString('mr-IN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+    return new Date(ms).toLocaleDateString("mr-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
   const formatAmount = (amount: bigint | number) =>
-    `₹${Number(amount).toLocaleString('mr-IN')}`;
+    `₹${Number(amount).toLocaleString("mr-IN")}`;
 
   const isPending = addTransaction.isPending || updateTransaction.isPending;
 
@@ -230,10 +235,12 @@ export default function TransactionPage() {
       </div>
 
       {/* Add / Edit Transaction Form */}
-      <Card className={editingTx ? 'border-2 border-primary/40 bg-primary/5' : ''}>
+      <Card
+        className={editingTx ? "border-2 border-primary/40 bg-primary/5" : ""}
+      >
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>{editingTx ? 'व्यवहार संपादित करा' : 'नवीन व्यवहार जोडा'}</span>
+            <span>{editingTx ? "व्यवहार संपादित करा" : "नवीन व्यवहार जोडा"}</span>
             {editingTx && (
               <Button
                 type="button"
@@ -263,7 +270,9 @@ export default function TransactionPage() {
                   id="date"
                   type="date"
                   value={form.date}
-                  onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, date: e.target.value }))
+                  }
                 />
               </div>
 
@@ -293,14 +302,18 @@ export default function TransactionPage() {
                 <Label>व्यवहाराचा प्रकार *</Label>
                 <Select
                   value={form.transactionType}
-                  onValueChange={(v) => setForm((prev) => ({ ...prev, transactionType: v }))}
+                  onValueChange={(v) =>
+                    setForm((prev) => ({ ...prev, transactionType: v }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Deposit">जमा (Deposit)</SelectItem>
-                    <SelectItem value="Withdrawal">काढणे (Withdrawal)</SelectItem>
+                    <SelectItem value="Withdrawal">
+                      काढणे (Withdrawal)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -313,7 +326,9 @@ export default function TransactionPage() {
                   type="number"
                   min="1"
                   value={form.amount}
-                  onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, amount: e.target.value }))
+                  }
                   placeholder="रक्कम टाका"
                 />
               </div>
@@ -324,7 +339,9 @@ export default function TransactionPage() {
                 <Input
                   id="reason"
                   value={form.reason}
-                  onChange={(e) => setForm((prev) => ({ ...prev, reason: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, reason: e.target.value }))
+                  }
                   placeholder="व्यवहाराचे कारण"
                 />
               </div>
@@ -336,7 +353,11 @@ export default function TransactionPage() {
                   <Input
                     id="previousBalance"
                     type="text"
-                    value={selectedAccount ? `₹${previousBalance.toLocaleString('mr-IN')}` : '—'}
+                    value={
+                      selectedAccount
+                        ? `₹${previousBalance.toLocaleString("mr-IN")}`
+                        : "—"
+                    }
                     readOnly
                     className="bg-muted text-muted-foreground cursor-not-allowed"
                   />
@@ -355,23 +376,23 @@ export default function TransactionPage() {
                     type="text"
                     value={
                       selectedAccount && form.amount
-                        ? `₹${totalAmount.toLocaleString('mr-IN')}`
-                        : '—'
+                        ? `₹${totalAmount.toLocaleString("mr-IN")}`
+                        : "—"
                     }
                     readOnly
                     className={`cursor-not-allowed font-semibold ${
                       selectedAccount && form.amount
-                        ? form.transactionType === 'Deposit'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-red-50 text-red-700 border-red-200'
-                        : 'bg-muted text-muted-foreground'
+                        ? form.transactionType === "Deposit"
+                          ? "bg-green-50 text-green-700 border-green-200"
+                          : "bg-red-50 text-red-700 border-red-200"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {form.transactionType === 'Deposit'
-                    ? 'मागील शिल्लक + रक्कम'
-                    : 'मागील शिल्लक − रक्कम'}
+                  {form.transactionType === "Deposit"
+                    ? "मागील शिल्लक + रक्कम"
+                    : "मागील शिल्लक − रक्कम"}
                 </p>
               </div>
             </div>
@@ -379,17 +400,41 @@ export default function TransactionPage() {
             <div className="flex gap-3">
               <Button type="submit" disabled={isPending}>
                 {isPending && (
-                  <svg aria-hidden="true" className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  <svg
+                    aria-hidden="true"
+                    className="animate-spin h-4 w-4 mr-2"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
                   </svg>
                 )}
                 {isPending
-                  ? editingTx ? 'अपडेट होत आहे...' : 'Save होत आहे...'
-                  : editingTx ? 'व्यवहार अपडेट करा' : 'व्यवहार जोडा'}
+                  ? editingTx
+                    ? "अपडेट होत आहे..."
+                    : "Save होत आहे..."
+                  : editingTx
+                    ? "व्यवहार अपडेट करा"
+                    : "व्यवहार जोडा"}
               </Button>
               {editingTx && (
-                <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                >
                   रद्द करा
                 </Button>
               )}
@@ -402,16 +447,30 @@ export default function TransactionPage() {
       {selectedAccount && (
         <Card>
           <CardHeader>
-            <CardTitle>
-              खाते {selectedAccount} चे व्यवहार
-            </CardTitle>
+            <CardTitle>खाते {selectedAccount} चे व्यवहार</CardTitle>
           </CardHeader>
           <CardContent>
             {txLoading ? (
               <div className="flex items-center justify-center py-8">
-                <svg aria-hidden="true" className="animate-spin h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                <svg
+                  aria-hidden="true"
+                  className="animate-spin h-6 w-6 text-primary"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
                 </svg>
               </div>
             ) : transactions.length === 0 ? (
@@ -431,7 +490,9 @@ export default function TransactionPage() {
                       <TableHead>एकूण रक्कम</TableHead>
                       <TableHead>कारण</TableHead>
                       <TableHead>शिल्लक</TableHead>
-                      {isAdmin && <TableHead className="text-center">क्रिया</TableHead>}
+                      {isAdmin && (
+                        <TableHead className="text-center">क्रिया</TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -441,19 +502,27 @@ export default function TransactionPage() {
                       return (
                         <TableRow
                           key={rowKey}
-                          className={isEditing ? 'bg-primary/10 border-l-4 border-primary' : ''}
+                          className={
+                            isEditing
+                              ? "bg-primary/10 border-l-4 border-primary"
+                              : ""
+                          }
                         >
-                          <TableCell className="whitespace-nowrap">{formatDate(tx.date)}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {formatDate(tx.date)}
+                          </TableCell>
                           <TableCell>{tx.studentName}</TableCell>
                           <TableCell>
                             <span
                               className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                tx.transactionType === 'Deposit'
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-red-100 text-red-700'
+                                tx.transactionType === "Deposit"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
                               }`}
                             >
-                              {tx.transactionType === 'Deposit' ? 'जमा' : 'काढणे'}
+                              {tx.transactionType === "Deposit"
+                                ? "जमा"
+                                : "काढणे"}
                             </span>
                           </TableCell>
                           <TableCell>{formatAmount(tx.amount)}</TableCell>
@@ -472,9 +541,13 @@ export default function TransactionPage() {
                               <div className="flex items-center justify-center gap-1">
                                 <Button
                                   type="button"
-                                  variant={isEditing ? 'default' : 'outline'}
+                                  variant={isEditing ? "default" : "outline"}
                                   size="sm"
-                                  onClick={() => isEditing ? handleCancelEdit() : handleEditClick(tx)}
+                                  onClick={() =>
+                                    isEditing
+                                      ? handleCancelEdit()
+                                      : handleEditClick(tx)
+                                  }
                                   className="h-7 px-2"
                                 >
                                   {isEditing ? (
@@ -488,13 +561,33 @@ export default function TransactionPage() {
                                   variant="destructive"
                                   size="sm"
                                   onClick={() => handleDeleteClick(tx.id)}
-                                  disabled={deleteTransaction.isPending && pendingDeleteId === tx.id}
+                                  disabled={
+                                    deleteTransaction.isPending &&
+                                    pendingDeleteId === tx.id
+                                  }
                                   className="h-7 px-2"
                                 >
-                                  {deleteTransaction.isPending && pendingDeleteId === tx.id ? (
-                                    <svg aria-hidden="true" className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                  {deleteTransaction.isPending &&
+                                  pendingDeleteId === tx.id ? (
+                                    <svg
+                                      aria-hidden="true"
+                                      className="animate-spin h-3 w-3"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                    >
+                                      <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                      />
+                                      <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v8H4z"
+                                      />
                                     </svg>
                                   ) : (
                                     <Trash2 className="h-3 w-3" />
@@ -531,7 +624,7 @@ export default function TransactionPage() {
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteTransaction.isPending ? 'डिलीट होत आहे...' : 'डिलीट करा'}
+              {deleteTransaction.isPending ? "डिलीट होत आहे..." : "डिलीट करा"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

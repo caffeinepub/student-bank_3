@@ -1,26 +1,26 @@
-import React from 'react';
-import { useAuth } from '../hooks/useAuth';
 import {
-  Home,
-  CreditCard,
   ArrowLeftRight,
-  History,
   BookOpen,
   Building2,
+  ChevronRight,
+  CreditCard,
+  GraduationCap,
+  History,
+  Home,
   LogOut,
   X,
-  GraduationCap,
-  ChevronRight,
-} from 'lucide-react';
+} from "lucide-react";
+import type React from "react";
+import { useAuth } from "../hooks/useAuth";
 
 export type PageId =
-  | 'home'
-  | 'students'
-  | 'accounts'
-  | 'transactions'
-  | 'history'
-  | 'passbook'
-  | 'bank-details';
+  | "home"
+  | "students"
+  | "accounts"
+  | "transactions"
+  | "history"
+  | "passbook"
+  | "bank-details";
 
 interface NavItem {
   id: PageId;
@@ -33,60 +33,60 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    id: 'home',
-    label: 'Home',
-    labelMr: 'मुख्यपृष्ठ',
+    id: "home",
+    label: "Home",
+    labelMr: "मुख्यपृष्ठ",
     icon: <Home className="w-5 h-5" />,
     adminOnly: true,
-    gradient: 'gradient-teal',
+    gradient: "gradient-teal",
   },
   {
-    id: 'students',
-    label: 'Students',
-    labelMr: 'विद्यार्थी',
+    id: "students",
+    label: "Students",
+    labelMr: "विद्यार्थी",
     icon: <GraduationCap className="w-5 h-5" />,
     adminOnly: true,
-    gradient: 'gradient-green',
+    gradient: "gradient-green",
   },
   {
-    id: 'accounts',
-    label: 'Accounts',
-    labelMr: 'खाते',
+    id: "accounts",
+    label: "Accounts",
+    labelMr: "खाते",
     icon: <CreditCard className="w-5 h-5" />,
     adminOnly: true,
-    gradient: 'gradient-orange',
+    gradient: "gradient-orange",
   },
   {
-    id: 'transactions',
-    label: 'Transactions',
-    labelMr: 'व्यवहार',
+    id: "transactions",
+    label: "Transactions",
+    labelMr: "व्यवहार",
     icon: <ArrowLeftRight className="w-5 h-5" />,
     adminOnly: true,
-    gradient: 'gradient-purple',
+    gradient: "gradient-purple",
   },
   {
-    id: 'history',
-    label: 'History',
-    labelMr: 'इतिहास',
+    id: "history",
+    label: "History",
+    labelMr: "इतिहास",
     icon: <History className="w-5 h-5" />,
     adminOnly: true,
-    gradient: 'gradient-red',
+    gradient: "gradient-red",
   },
   {
-    id: 'passbook',
-    label: 'Passbook Print',
-    labelMr: 'पासबुक प्रिंट',
+    id: "passbook",
+    label: "Passbook Print",
+    labelMr: "पासबुक प्रिंट",
     icon: <BookOpen className="w-5 h-5" />,
     adminOnly: false,
-    gradient: 'gradient-green',
+    gradient: "gradient-green",
   },
   {
-    id: 'bank-details',
-    label: 'Bank Details',
-    labelMr: 'बँक माहिती',
+    id: "bank-details",
+    label: "Bank Details",
+    labelMr: "बँक माहिती",
     icon: <Building2 className="w-5 h-5" />,
     adminOnly: false,
-    gradient: 'gradient-teal',
+    gradient: "gradient-teal",
   },
 ];
 
@@ -97,7 +97,12 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-export default function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarProps) {
+export default function Sidebar({
+  currentPage,
+  onNavigate,
+  isOpen,
+  onClose,
+}: SidebarProps) {
   const { userAccountNumber, logout, isAdmin } = useAuth();
 
   const visibleItems = navItems.filter((item) => !item.adminOnly || isAdmin);
@@ -116,14 +121,14 @@ export default function Sidebar({ currentPage, onNavigate, isOpen, onClose }: Si
           aria-label="Close sidebar"
           className="fixed inset-0 bg-black/50 z-40 lg:hidden cursor-default"
           onClick={onClose}
-          onKeyDown={(e) => e.key === 'Escape' && onClose()}
+          onKeyDown={(e) => e.key === "Escape" && onClose()}
         />
       )}
 
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full w-72 z-50 gradient-sidebar flex flex-col transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0 lg:static lg:z-auto`}
       >
         {/* Header */}
@@ -135,12 +140,14 @@ export default function Sidebar({ currentPage, onNavigate, isOpen, onClose }: Si
                 alt="Logo"
                 className="w-7 h-7 object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
             </div>
             <div>
-              <h2 className="text-white font-bold text-base font-heading leading-tight">Student Bank</h2>
+              <h2 className="text-white font-bold text-base font-heading leading-tight">
+                Student Bank
+              </h2>
               <p className="text-white/50 text-xs">विद्यार्थी बँक</p>
             </div>
           </div>
@@ -158,17 +165,21 @@ export default function Sidebar({ currentPage, onNavigate, isOpen, onClose }: Si
           <div className="flex items-center gap-3">
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${
-                isAdmin ? 'gradient-green' : 'gradient-orange'
+                isAdmin ? "gradient-green" : "gradient-orange"
               }`}
             >
-              {isAdmin ? 'A' : (userAccountNumber?.charAt(0)?.toUpperCase() || 'U')}
+              {isAdmin
+                ? "A"
+                : userAccountNumber?.charAt(0)?.toUpperCase() || "U"}
             </div>
             <div className="min-w-0">
               <p className="text-white font-semibold text-sm truncate">
-                {isAdmin ? 'Administrator' : `Account: ${userAccountNumber}`}
+                {isAdmin ? "Administrator" : `Account: ${userAccountNumber}`}
               </p>
-              <p className={`text-xs font-medium ${isAdmin ? 'text-green-400' : 'text-orange-400'}`}>
-                {isAdmin ? '● Admin' : '● User'}
+              <p
+                className={`text-xs font-medium ${isAdmin ? "text-green-400" : "text-orange-400"}`}
+              >
+                {isAdmin ? "● Admin" : "● User"}
               </p>
             </div>
           </div>
@@ -189,22 +200,30 @@ export default function Sidebar({ currentPage, onNavigate, isOpen, onClose }: Si
                     onClick={() => handleNavigate(item.id)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
                       isActive
-                        ? 'bg-white/15 text-white shadow-md'
-                        : 'text-white/60 hover:text-white hover:bg-white/8'
+                        ? "bg-white/15 text-white shadow-md"
+                        : "text-white/60 hover:text-white hover:bg-white/8"
                     }`}
                   >
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${
-                        isActive ? item.gradient : 'bg-white/10 group-hover:bg-white/15'
+                        isActive
+                          ? item.gradient
+                          : "bg-white/10 group-hover:bg-white/15"
                       }`}
                     >
                       {item.icon}
                     </div>
                     <div className="flex-1 text-left min-w-0">
-                      <p className="font-semibold text-sm leading-tight">{item.label}</p>
-                      <p className="text-xs opacity-60 leading-tight">{item.labelMr}</p>
+                      <p className="font-semibold text-sm leading-tight">
+                        {item.label}
+                      </p>
+                      <p className="text-xs opacity-60 leading-tight">
+                        {item.labelMr}
+                      </p>
                     </div>
-                    {isActive && <ChevronRight className="w-4 h-4 text-white/60 shrink-0" />}
+                    {isActive && (
+                      <ChevronRight className="w-4 h-4 text-white/60 shrink-0" />
+                    )}
                   </button>
                 </li>
               );

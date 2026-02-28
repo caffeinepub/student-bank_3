@@ -1,6 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { Student, Account, Transaction, BankDetail, UserProfile } from '../backend';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type {
+  Account,
+  BankDetail,
+  Student,
+  Transaction,
+  UserProfile,
+} from "../backend";
+import { useActor } from "./useActor";
 
 // ─── User Profile ────────────────────────────────────────────────────────────
 
@@ -8,9 +14,9 @@ export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
   const query = useQuery<UserProfile | null>({
-    queryKey: ['currentUserProfile'],
+    queryKey: ["currentUserProfile"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.getCallerUserProfile();
     },
     enabled: !!actor && !actorFetching,
@@ -30,11 +36,11 @@ export function useSaveCallerUserProfile() {
 
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
@@ -45,7 +51,7 @@ export function useGetAllStudents() {
   const { actor, isFetching } = useActor();
 
   return useQuery<Student[]>({
-    queryKey: ['students'],
+    queryKey: ["students"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllStudents();
@@ -68,7 +74,7 @@ export function useAddStudent() {
       taluka: string;
       district: string;
     }) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       return actor.addStudent(
         data.name,
         data.dateOfBirth,
@@ -76,14 +82,14 @@ export function useAddStudent() {
         BigInt(data.attendanceNumber),
         data.schoolName,
         data.taluka,
-        data.district
+        data.district,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
     },
     onError: (error: Error) => {
-      console.error('addStudent error:', error.message);
+      console.error("addStudent error:", error.message);
     },
   });
 }
@@ -103,7 +109,7 @@ export function useUpdateStudent() {
       taluka: string;
       district: string;
     }) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       return actor.updateStudent(
         BigInt(data.id),
         data.name,
@@ -112,14 +118,14 @@ export function useUpdateStudent() {
         BigInt(data.attendanceNumber),
         data.schoolName,
         data.taluka,
-        data.district
+        data.district,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
     },
     onError: (error: Error) => {
-      console.error('updateStudent error:', error.message);
+      console.error("updateStudent error:", error.message);
     },
   });
 }
@@ -130,11 +136,11 @@ export function useDeleteStudent() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       return actor.deleteStudent(BigInt(id));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
     },
   });
 }
@@ -145,7 +151,7 @@ export function useGetAllAccounts() {
   const { actor, isFetching } = useActor();
 
   return useQuery<Account[]>({
-    queryKey: ['accounts'],
+    queryKey: ["accounts"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllAccounts();
@@ -166,20 +172,20 @@ export function useAddAccount() {
       initialAmount: number;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       return actor.addAccount(
         BigInt(data.studentId),
         data.bankName,
         data.accountNumber,
         BigInt(data.initialAmount),
-        data.ifscCode
+        data.ifscCode,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
     onError: (error: Error) => {
-      console.error('addAccount error:', error.message);
+      console.error("addAccount error:", error.message);
     },
   });
 }
@@ -196,20 +202,20 @@ export function useUpdateAccount() {
       initialAmount: number;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       return actor.updateAccount(
         BigInt(data.studentId),
         data.bankName,
         data.accountNumber,
         BigInt(data.initialAmount),
-        data.ifscCode
+        data.ifscCode,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
     onError: (error: Error) => {
-      console.error('updateAccount error:', error.message);
+      console.error("updateAccount error:", error.message);
     },
   });
 }
@@ -220,11 +226,11 @@ export function useDeleteAccount() {
 
   return useMutation({
     mutationFn: async (accountNumber: string) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       return actor.deleteAccount(accountNumber);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
   });
 }
@@ -235,7 +241,7 @@ export function useGetAllTransactions() {
   const { actor, isFetching } = useActor();
 
   return useQuery<Transaction[]>({
-    queryKey: ['transactions'],
+    queryKey: ["transactions"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllTransactions();
@@ -248,7 +254,7 @@ export function useGetTransactionsByAccount(accountNumber: string) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Transaction[]>({
-    queryKey: ['transactions', accountNumber],
+    queryKey: ["transactions", accountNumber],
     queryFn: async () => {
       if (!actor) return [];
       if (!accountNumber) return [];
@@ -258,11 +264,20 @@ export function useGetTransactionsByAccount(accountNumber: string) {
   });
 }
 
-export function useGetTransactionsByDateRange(startDate: bigint, endDate: bigint, enabled: boolean) {
+export function useGetTransactionsByDateRange(
+  startDate: bigint,
+  endDate: bigint,
+  enabled: boolean,
+) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Transaction[]>({
-    queryKey: ['transactions', 'dateRange', startDate.toString(), endDate.toString()],
+    queryKey: [
+      "transactions",
+      "dateRange",
+      startDate.toString(),
+      endDate.toString(),
+    ],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getTransactionsByDateRange(startDate, endDate);
@@ -283,25 +298,26 @@ export function useAddTransaction() {
       reason: string;
       date?: string;
     }) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
-      const customDate =
-        data.date && data.date.trim()
-          ? BigInt(new Date(data.date).getTime()) * BigInt(1_000_000)
-          : BigInt(0);
+      if (!actor) throw new Error("Actor not ready — please try again");
+      const customDate = data.date?.trim()
+        ? BigInt(new Date(data.date).getTime()) * BigInt(1_000_000)
+        : BigInt(0);
       return actor.addTransaction(
         data.accountNumber,
         data.transactionType,
         BigInt(data.amount),
         data.reason,
-        customDate
+        customDate,
       );
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions', variables.accountNumber] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["transactions", variables.accountNumber],
+      });
     },
     onError: (error: Error) => {
-      console.error('addTransaction error:', error.message);
+      console.error("addTransaction error:", error.message);
     },
   });
 }
@@ -312,18 +328,18 @@ export function useDeleteTransaction() {
 
   return useMutation({
     mutationFn: async (transactionId: bigint) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       const result = await actor.deleteTransaction(transactionId);
-      if (result.__kind__ === 'err') {
+      if (result.__kind__ === "err") {
         throw new Error(result.err);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
     onError: (error: Error) => {
-      console.error('deleteTransaction error:', error.message);
+      console.error("deleteTransaction error:", error.message);
     },
   });
 }
@@ -340,28 +356,27 @@ export function useUpdateTransaction() {
       reason: string;
       date: string;
     }) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
-      const customDate =
-        data.date && data.date.trim()
-          ? BigInt(new Date(data.date).getTime()) * BigInt(1_000_000)
-          : BigInt(0);
+      if (!actor) throw new Error("Actor not ready — please try again");
+      const customDate = data.date?.trim()
+        ? BigInt(new Date(data.date).getTime()) * BigInt(1_000_000)
+        : BigInt(0);
       const result = await actor.updateTransaction(
         data.transactionId,
         data.transactionType,
         BigInt(data.amount),
         data.reason,
-        customDate
+        customDate,
       );
-      if (result.__kind__ === 'err') {
+      if (result.__kind__ === "err") {
         throw new Error(result.err);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
     onError: (error: Error) => {
-      console.error('updateTransaction error:', error.message);
+      console.error("updateTransaction error:", error.message);
     },
   });
 }
@@ -372,7 +387,7 @@ export function useGetAllBankDetails() {
   const { actor, isFetching } = useActor();
 
   return useQuery<BankDetail[]>({
-    queryKey: ['bankDetails'],
+    queryKey: ["bankDetails"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllBankDetails();
@@ -392,14 +407,19 @@ export function useAddBankDetail() {
       district: string;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
-      return actor.addBankDetail(data.bankName, data.taluka, data.district, data.ifscCode);
+      if (!actor) throw new Error("Actor not ready — please try again");
+      return actor.addBankDetail(
+        data.bankName,
+        data.taluka,
+        data.district,
+        data.ifscCode,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bankDetails'] });
+      queryClient.invalidateQueries({ queryKey: ["bankDetails"] });
     },
     onError: (error: Error) => {
-      console.error('addBankDetail error:', error.message);
+      console.error("addBankDetail error:", error.message);
     },
   });
 }
@@ -415,14 +435,19 @@ export function useUpdateBankDetail() {
       district: string;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
-      return actor.updateBankDetail(data.bankName, data.taluka, data.district, data.ifscCode);
+      if (!actor) throw new Error("Actor not ready — please try again");
+      return actor.updateBankDetail(
+        data.bankName,
+        data.taluka,
+        data.district,
+        data.ifscCode,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bankDetails'] });
+      queryClient.invalidateQueries({ queryKey: ["bankDetails"] });
     },
     onError: (error: Error) => {
-      console.error('updateBankDetail error:', error.message);
+      console.error("updateBankDetail error:", error.message);
     },
   });
 }
@@ -433,11 +458,11 @@ export function useDeleteBankDetail() {
 
   return useMutation({
     mutationFn: async (ifscCode: string) => {
-      if (!actor) throw new Error('Actor not ready — please try again');
+      if (!actor) throw new Error("Actor not ready — please try again");
       return actor.deleteBankDetail(ifscCode);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bankDetails'] });
+      queryClient.invalidateQueries({ queryKey: ["bankDetails"] });
     },
   });
 }
