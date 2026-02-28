@@ -5,11 +5,8 @@ import Nat "mo:core/Nat";
 import Iter "mo:core/Iter";
 import CoreRuntime "mo:core/Runtime";
 import Principal "mo:core/Principal";
-
-import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-
-
+import MixinAuthorization "authorization/MixinAuthorization";
 
 actor {
   let accessControlState = AccessControl.initState();
@@ -67,15 +64,17 @@ actor {
     ifscCode : Text;
   };
 
-  let userProfiles = Map.empty<Principal, UserProfile>();
-  let students = Map.empty<Nat, Student>();
-  let accounts = Map.empty<Text, Account>();
-  let transactions = Map.empty<Nat, Transaction>();
-  let bankDetails = Map.empty<Text, BankDetail>();
+  // STABLE variables for persistence across upgrades
+  stable let userProfiles = Map.empty<Principal, UserProfile>();
+  stable let students = Map.empty<Nat, Student>();
+  stable let accounts = Map.empty<Text, Account>();
+  stable let transactions = Map.empty<Nat, Transaction>();
+  stable let bankDetails = Map.empty<Text, BankDetail>();
 
-  var nextStudentId = 1;
-  var nextTransactionId = 1;
+  stable var nextStudentId = 1;
+  stable var nextTransactionId = 1;
 
+  // Helper function to get a student by ID
   func getStudent(id : Nat) : Student {
     switch (students.get(id)) {
       case (null) { CoreRuntime.trap("Student not found") };
@@ -83,6 +82,7 @@ actor {
     };
   };
 
+  // Helper function to get an account by account number
   func getAccount(accountNumber : Text) : Account {
     switch (accounts.get(accountNumber)) {
       case (null) { CoreRuntime.trap("Account not found") };
@@ -90,6 +90,7 @@ actor {
     };
   };
 
+  // Helper function to calculate running balance up to a specific transaction
   func calculateRunningBalanceUpToTransaction(accountNumber : Text, upToTransactionId : Nat) : Nat {
     var balance = 0;
     let account = getAccount(accountNumber);
@@ -107,10 +108,12 @@ actor {
     balance;
   };
 
+  // Helper function to calculate running balance including a new transaction
   func calculateRunningBalance(accountNumber : Text, amount : Nat, transactionType : Text) : Nat {
     var balance = 0;
     let account = getAccount(accountNumber);
     balance += account.initialAmount;
+
     for (transaction in transactions.values()) {
       if (transaction.accountNumber == accountNumber) {
         if (transaction.transactionType == "Deposit") {
@@ -130,6 +133,7 @@ actor {
     balance;
   };
 
+  // Helper function to calculate total amount of transactions for an account
   func calculateTotalAmount(accountNumber : Text) : Nat {
     var total = 0;
     for (transaction in transactions.values()) {
@@ -140,10 +144,12 @@ actor {
     total;
   };
 
+  // Helper function to get the previous balance for an account
   func getPreviousBalance(accountNumber : Text) : Nat {
     var balance = 0;
     let account = getAccount(accountNumber);
     balance += account.initialAmount;
+
     for (transaction in transactions.values()) {
       if (transaction.accountNumber == accountNumber) {
         if (transaction.transactionType == "Deposit") {
@@ -248,6 +254,7 @@ actor {
     students.values().toArray();
   };
 
+  // Account CRUD Operations
   public shared ({ caller }) func addAccount(
     studentId : Nat,
     bankName : Text,
@@ -460,6 +467,7 @@ actor {
     transactions.values().toArray();
   };
 
+  // Bank Details CRUD Operations
   public shared ({ caller }) func addBankDetail(
     bankName : Text,
     taluka : Text,
@@ -512,4 +520,3 @@ actor {
     bankDetails.values().toArray();
   };
 };
-

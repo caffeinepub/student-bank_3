@@ -406,48 +406,6 @@ export default function HistoryPage() {
                           ).toLocaleString("en-IN")}
                         </td>
                       </tr>
-                      <tr>
-                        <td style={{ padding: "2px 6px", color: "#555" }}>
-                          एकूण जमा:
-                        </td>
-                        <td
-                          style={{
-                            padding: "2px 6px",
-                            fontWeight: "bold",
-                            color: "green",
-                          }}
-                        >
-                          ₹{totalDeposits.toLocaleString("en-IN")}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style={{ padding: "2px 6px", color: "#555" }}>
-                          एकूण काढणे:
-                        </td>
-                        <td
-                          style={{
-                            padding: "2px 6px",
-                            fontWeight: "bold",
-                            color: "red",
-                          }}
-                        >
-                          ₹{totalWithdrawals.toLocaleString("en-IN")}
-                        </td>
-                      </tr>
-                      <tr style={{ background: "#f0f0f0" }}>
-                        <td style={{ padding: "2px 6px", fontWeight: "bold" }}>
-                          शिल्लक / Balance:
-                        </td>
-                        <td
-                          style={{
-                            padding: "2px 6px",
-                            fontWeight: "bold",
-                            fontSize: "13px",
-                          }}
-                        >
-                          ₹{currentBalance.toLocaleString("en-IN")}
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -572,12 +530,6 @@ export default function HistoryPage() {
                       ₹{totalWithdrawals.toLocaleString("en-IN")}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm border-t border-border pt-1">
-                    <span className="font-bold">Current Balance:</span>
-                    <span className="font-bold text-green-600">
-                      ₹{currentBalance.toLocaleString("en-IN")}
-                    </span>
-                  </div>
                 </div>
               </div>
             )}
@@ -627,53 +579,68 @@ export default function HistoryPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {searchResult.transactions.map((t, i) => (
-                      <tr
-                        key={t.id.toString()}
-                        className="hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {i + 1}
-                        </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
-                          {new Date(
-                            Number(t.date) / 1_000_000,
-                          ).toLocaleDateString("en-IN")}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                              t.transactionType === "Deposit"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-600"
-                            }`}
+                    {(() => {
+                      let runningBal = searchResult.account
+                        ? Number(searchResult.account.initialAmount)
+                        : 0;
+                      return searchResult.transactions.map((t, i) => {
+                        if (t.transactionType === "Deposit") {
+                          runningBal += Number(t.amount);
+                        } else {
+                          runningBal -= Number(t.amount);
+                        }
+                        const balAfter = runningBal;
+                        return (
+                          <tr
+                            key={t.id.toString()}
+                            className="hover:bg-muted/30 transition-colors"
                           >
-                            {t.transactionType === "Deposit" ? (
-                              <TrendingUp className="w-3 h-3" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3" />
-                            )}
-                            {t.transactionType === "Deposit" ? "जमा" : "काढणे"}
-                          </span>
-                        </td>
-                        <td
-                          className={`px-4 py-3 text-right font-bold ${
-                            t.transactionType === "Deposit"
-                              ? "text-green-600"
-                              : "text-red-500"
-                          }`}
-                        >
-                          {t.transactionType === "Deposit" ? "+" : "-"}₹
-                          {Number(t.amount).toLocaleString("en-IN")}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {t.reason}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-foreground">
-                          ₹{Number(t.runningBalance).toLocaleString("en-IN")}
-                        </td>
-                      </tr>
-                    ))}
+                            <td className="px-4 py-3 text-muted-foreground text-xs">
+                              {i + 1}
+                            </td>
+                            <td className="px-4 py-3 text-foreground text-xs">
+                              {new Date(
+                                Number(t.date) / 1_000_000,
+                              ).toLocaleDateString("en-IN")}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+                                  t.transactionType === "Deposit"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-600"
+                                }`}
+                              >
+                                {t.transactionType === "Deposit" ? (
+                                  <TrendingUp className="w-3 h-3" />
+                                ) : (
+                                  <TrendingDown className="w-3 h-3" />
+                                )}
+                                {t.transactionType === "Deposit"
+                                  ? "जमा"
+                                  : "काढणे"}
+                              </span>
+                            </td>
+                            <td
+                              className={`px-4 py-3 text-right font-bold ${
+                                t.transactionType === "Deposit"
+                                  ? "text-green-600"
+                                  : "text-red-500"
+                              }`}
+                            >
+                              {t.transactionType === "Deposit" ? "+" : "-"}₹
+                              {Number(t.amount).toLocaleString("en-IN")}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground text-xs">
+                              {t.reason}
+                            </td>
+                            <td className="px-4 py-3 text-right font-semibold text-foreground">
+                              ₹{balAfter.toLocaleString("en-IN")}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-border bg-muted/50">
@@ -694,6 +661,88 @@ export default function HistoryPage() {
                 </table>
               </div>
             )}
+          </div>
+
+          {/* Print-only Current Balance Summary */}
+          <div className="print-only" style={{ marginTop: "12px" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                borderTop: "2px solid #000",
+              }}
+            >
+              <tbody>
+                <tr style={{ background: "#e8f5e9" }}>
+                  <td
+                    style={{
+                      padding: "8px 12px",
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                    }}
+                  >
+                    एकूण जमा / Total Deposits:
+                  </td>
+                  <td
+                    style={{
+                      padding: "8px 12px",
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                      color: "green",
+                      textAlign: "right",
+                    }}
+                  >
+                    ₹{totalDeposits.toLocaleString("en-IN")}
+                  </td>
+                  <td
+                    style={{
+                      padding: "8px 12px",
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                    }}
+                  >
+                    एकूण काढणे / Total Withdrawals:
+                  </td>
+                  <td
+                    style={{
+                      padding: "8px 12px",
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                      color: "red",
+                      textAlign: "right",
+                    }}
+                  >
+                    ₹{totalWithdrawals.toLocaleString("en-IN")}
+                  </td>
+                </tr>
+                <tr
+                  style={{ background: "#f0f0f0", borderTop: "2px solid #000" }}
+                >
+                  <td
+                    colSpan={2}
+                    style={{
+                      padding: "10px 12px",
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                    }}
+                  >
+                    शिल्लक / Current Balance:
+                  </td>
+                  <td
+                    colSpan={2}
+                    style={{
+                      padding: "10px 12px",
+                      fontWeight: "bold",
+                      fontSize: "18px",
+                      textAlign: "right",
+                      color: "#1a7a1a",
+                    }}
+                  >
+                    ₹{currentBalance.toLocaleString("en-IN")}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           {/* Print Footer */}
