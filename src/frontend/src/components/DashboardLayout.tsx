@@ -1,4 +1,4 @@
-import { Menu } from "lucide-react";
+import { Loader2, Menu } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
@@ -10,6 +10,7 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
   pageTitle: string;
   pageSubtitle?: string;
+  actorLoading?: boolean;
 }
 
 export default function DashboardLayout({
@@ -18,6 +19,7 @@ export default function DashboardLayout({
   children,
   pageTitle,
   pageSubtitle,
+  actorLoading = false,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAdmin } = useAuth();
@@ -72,6 +74,21 @@ export default function DashboardLayout({
             </div>
           </div>
         </header>
+
+        {/* Actor loading banner */}
+        {actorLoading && (
+          <div
+            className="shrink-0 px-4 py-2 flex items-center gap-2 text-xs font-medium no-print"
+            style={{
+              background:
+                "linear-gradient(90deg, oklch(0.75 0.18 200), oklch(0.65 0.20 220))",
+              color: "white",
+            }}
+          >
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span>Server शी जोडत आहे… कृपया थांबा</span>
+          </div>
+        )}
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-4">

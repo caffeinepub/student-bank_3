@@ -1,4 +1,4 @@
-import { Building2, CreditCard, Lock, User } from "lucide-react";
+import { CreditCard, Lock, ShieldCheck, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
@@ -18,32 +18,41 @@ export default function LoginPage() {
 
     try {
       if (loginType === "admin") {
-        await login("", "", "admin");
-        toast.success("Admin म्हणून यशस्वीरित्या login झालात!");
+        if (!accountNumber.trim() || !password.trim()) {
+          setError("Username आणि Password टाका");
+          setIsLoading(false);
+          return;
+        }
+        const success = await login(
+          accountNumber.trim(),
+          password.trim(),
+          "admin",
+        );
+        if (!success) {
+          setError("चुकीचे Username किंवा Password. कृपया तपासा.");
+        } else {
+          toast.success("Admin म्हणून यशस्वीरित्या login झालात!");
+        }
       } else {
         if (!accountNumber.trim()) {
           setError("खाते क्रमांक टाका");
           setIsLoading(false);
           return;
         }
-        const success = await login(accountNumber.trim(), password, "user");
+        const success = await login(
+          accountNumber.trim(),
+          password.trim(),
+          "user",
+        );
         if (!success) {
-          setError("खाते क्रमांक सापडला नाही. कृपया तपासा.");
+          setError("खाते क्रमांक किंवा पासवर्ड चुकीचे आहे.");
         } else {
           toast.success("यशस्वीरित्या login झालात!");
         }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (
-        msg.toLowerCase().includes("cancel") ||
-        msg.toLowerCase().includes("closed") ||
-        msg.toLowerCase().includes("abort")
-      ) {
-        setError("Login रद्द केले. पुन्हा प्रयत्न करा.");
-      } else {
-        setError(`Login अयशस्वी: ${msg}`);
-      }
+      setError(`Login अयशस्वी: ${msg}`);
     } finally {
       setIsLoading(false);
     }
@@ -226,18 +235,54 @@ export default function LoginPage() {
             )}
 
             {loginType === "admin" && (
-              <div
-                className="rounded-xl p-4 text-center border border-white/10"
-                style={{ background: "rgba(255,255,255,0.05)" }}
-              >
-                <Building2 className="w-8 h-8 text-white/50 mx-auto mb-2" />
-                <p className="text-white/70 text-sm">
-                  Internet Identity द्वारे Admin login करा.
-                </p>
-                <p className="text-white/40 text-xs mt-1">
-                  Login बटण दाबल्यावर II popup उघडेल.
-                </p>
-              </div>
+              <>
+                <div>
+                  <label
+                    htmlFor="adminUsername"
+                    className="block text-sm font-semibold text-white/80 mb-1.5"
+                  >
+                    Username
+                  </label>
+                  <div className="relative">
+                    <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <input
+                      id="adminUsername"
+                      type="text"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="admin"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 text-sm"
+                      style={{
+                        background: "rgba(255,255,255,0.1)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="adminPassword"
+                    className="block text-sm font-semibold text-white/80 mb-1.5"
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <input
+                      id="adminPassword"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 text-sm"
+                      style={{
+                        background: "rgba(255,255,255,0.1)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {error && (

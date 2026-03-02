@@ -36,6 +36,7 @@ import {
   useAddTransaction,
   useDeleteTransaction,
   useGetAllAccounts,
+  useGetAllStudents,
   useGetTransactionsByAccount,
   useUpdateTransaction,
 } from "../hooks/useQueries";
@@ -59,6 +60,7 @@ function timestampToDateString(timestamp: bigint): string {
 
 export default function TransactionPage() {
   const { data: accounts = [] } = useGetAllAccounts();
+  const { data: students = [] } = useGetAllStudents();
   const addTransaction = useAddTransaction();
   const deleteTransaction = useDeleteTransaction();
   const updateTransaction = useUpdateTransaction();
@@ -86,6 +88,11 @@ export default function TransactionPage() {
   const selectedAccountData = accounts.find(
     (a) => a.accountNumber === selectedAccount,
   );
+
+  // Derive student name for the selected account
+  const selectedStudentName = selectedAccountData
+    ? (students.find((s) => s.id === selectedAccountData.studentId)?.name ?? "")
+    : "";
   const previousBalance = (() => {
     if (!selectedAccountData) return 0;
     let bal = Number(selectedAccountData.initialAmount);
@@ -278,23 +285,43 @@ export default function TransactionPage() {
 
               {/* Account Selector */}
               <div>
-                <Label>खाते *</Label>
+                <Label>खाते नंबर *</Label>
                 <Select
                   value={selectedAccount}
                   onValueChange={setSelectedAccount}
                   disabled={!!editingTx}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="खाते निवडा" />
+                    <SelectValue placeholder="खाते नंबर निवडा" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {accounts.map((a) => (
-                      <SelectItem key={a.accountNumber} value={a.accountNumber}>
-                        {a.accountNumber} — {a.bankName}
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="max-h-52 overflow-y-auto">
+                    {accounts.map((a) => {
+                      const sName =
+                        students.find((s) => s.id === a.studentId)?.name ?? "";
+                      return (
+                        <SelectItem
+                          key={a.accountNumber}
+                          value={a.accountNumber}
+                        >
+                          {a.accountNumber}
+                          {sName ? ` — ${sName}` : ""}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Student Name (auto-filled) */}
+              <div>
+                <Label>विद्यार्थी नाव</Label>
+                <Input
+                  type="text"
+                  value={selectedStudentName}
+                  readOnly
+                  placeholder="खाते निवडल्यावर आपोआप भरले जाते"
+                  className="bg-muted text-muted-foreground cursor-not-allowed"
+                />
               </div>
 
               {/* Transaction Type */}

@@ -2,7 +2,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import DashboardLayout from "./components/DashboardLayout";
+import { useActor } from "./hooks/useActor";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { useSyncGlobalActor } from "./hooks/useQueries";
 import AccountPage from "./pages/AccountPage";
 import BankDetailsPage from "./pages/BankDetailsPage";
 import HistoryPage from "./pages/HistoryPage";
@@ -33,6 +35,9 @@ const queryClient = new QueryClient({
 function AppInner() {
   const { isAuthenticated, isAdmin } = useAuth();
   const [currentPage, setCurrentPage] = useState<PageId>("home");
+  // Keep global actor store in sync so all mutations can access the latest actor
+  useSyncGlobalActor();
+  const { actor, isFetching: actorFetching } = useActor();
 
   if (!isAuthenticated) {
     return <LoginPage />;
@@ -85,6 +90,7 @@ function AppInner() {
       onNavigate={setCurrentPage}
       pageTitle={pageTitle}
       pageSubtitle={pageSubtitle}
+      actorLoading={actorFetching && !actor}
     >
       {renderPage()}
     </DashboardLayout>

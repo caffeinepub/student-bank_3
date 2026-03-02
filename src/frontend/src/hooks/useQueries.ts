@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import type {
   Account,
   BankDetail,
@@ -6,7 +7,56 @@ import type {
   Transaction,
   UserProfile,
 } from "../backend";
+import { createActorWithConfig } from "../config";
+import {
+  getGlobalActor,
+  setGlobalActor,
+  waitForGlobalActor,
+} from "../utils/actorStore";
+import { getSecretParameter } from "../utils/urlParams";
 import { useActor } from "./useActor";
+
+// Keep global actor store in sync with hook actor
+export function useSyncGlobalActor() {
+  const { actor } = useActor();
+  useEffect(() => {
+    setGlobalActor(actor);
+  }, [actor]);
+}
+
+// Initialize actor with admin token for write operations
+async function initActorForAdmin(actor: {
+  _initializeAccessControlWithSecret: (token: string) => Promise<void>;
+}) {
+  const adminToken = getSecretParameter("caffeineAdminToken") || "";
+  if (adminToken) {
+    try {
+      await actor._initializeAccessControlWithSecret(adminToken);
+    } catch {
+      // Silently ignore — may already be initialized
+    }
+  }
+}
+
+// Get a ready actor — waits if not yet initialized, with fallback
+async function getReadyActor() {
+  // Try synchronous first
+  let actor = getGlobalActor();
+  if (actor) {
+    await initActorForAdmin(actor);
+    return actor;
+  }
+  // Otherwise wait up to 10 seconds (20 attempts x 500ms)
+  try {
+    actor = await waitForGlobalActor(20, 500);
+  } catch {
+    // Fallback: create anonymous actor directly if the global actor never initializes
+    actor = await createActorWithConfig();
+    setGlobalActor(actor);
+  }
+  await initActorForAdmin(actor);
+  return actor;
+}
 
 // ─── User Profile ────────────────────────────────────────────────────────────
 
@@ -31,12 +81,11 @@ export function useGetCallerUserProfile() {
 }
 
 export function useSaveCallerUserProfile() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
@@ -61,7 +110,6 @@ export function useGetAllStudents() {
 }
 
 export function useAddStudent() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -74,7 +122,7 @@ export function useAddStudent() {
       taluka: string;
       district: string;
     }) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.addStudent(
         data.name,
         data.dateOfBirth,
@@ -95,7 +143,6 @@ export function useAddStudent() {
 }
 
 export function useUpdateStudent() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -109,7 +156,7 @@ export function useUpdateStudent() {
       taluka: string;
       district: string;
     }) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.updateStudent(
         BigInt(data.id),
         data.name,
@@ -131,12 +178,11 @@ export function useUpdateStudent() {
 }
 
 export function useDeleteStudent() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: number) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.deleteStudent(BigInt(id));
     },
     onSuccess: () => {
@@ -161,7 +207,6 @@ export function useGetAllAccounts() {
 }
 
 export function useAddAccount() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -172,7 +217,7 @@ export function useAddAccount() {
       initialAmount: number;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.addAccount(
         BigInt(data.studentId),
         data.bankName,
@@ -191,7 +236,6 @@ export function useAddAccount() {
 }
 
 export function useUpdateAccount() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -202,7 +246,7 @@ export function useUpdateAccount() {
       initialAmount: number;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.updateAccount(
         BigInt(data.studentId),
         data.bankName,
@@ -221,12 +265,11 @@ export function useUpdateAccount() {
 }
 
 export function useDeleteAccount() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (accountNumber: string) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.deleteAccount(accountNumber);
     },
     onSuccess: () => {
@@ -287,7 +330,6 @@ export function useGetTransactionsByDateRange(
 }
 
 export function useAddTransaction() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -298,7 +340,7 @@ export function useAddTransaction() {
       reason: string;
       date?: string;
     }) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       const customDate = data.date?.trim()
         ? BigInt(new Date(data.date).getTime()) * BigInt(1_000_000)
         : BigInt(0);
@@ -323,12 +365,11 @@ export function useAddTransaction() {
 }
 
 export function useDeleteTransaction() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (transactionId: bigint) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       const result = await actor.deleteTransaction(transactionId);
       if (result.__kind__ === "err") {
         throw new Error(result.err);
@@ -345,7 +386,6 @@ export function useDeleteTransaction() {
 }
 
 export function useUpdateTransaction() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -356,7 +396,7 @@ export function useUpdateTransaction() {
       reason: string;
       date: string;
     }) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       const customDate = data.date?.trim()
         ? BigInt(new Date(data.date).getTime()) * BigInt(1_000_000)
         : BigInt(0);
@@ -397,7 +437,6 @@ export function useGetAllBankDetails() {
 }
 
 export function useAddBankDetail() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -407,7 +446,7 @@ export function useAddBankDetail() {
       district: string;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.addBankDetail(
         data.bankName,
         data.taluka,
@@ -425,7 +464,6 @@ export function useAddBankDetail() {
 }
 
 export function useUpdateBankDetail() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -435,7 +473,7 @@ export function useUpdateBankDetail() {
       district: string;
       ifscCode: string;
     }) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.updateBankDetail(
         data.bankName,
         data.taluka,
@@ -453,12 +491,11 @@ export function useUpdateBankDetail() {
 }
 
 export function useDeleteBankDetail() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ifscCode: string) => {
-      if (!actor) throw new Error("Actor not ready — please try again");
+      const actor = await getReadyActor();
       return actor.deleteBankDetail(ifscCode);
     },
     onSuccess: () => {

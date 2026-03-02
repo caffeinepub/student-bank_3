@@ -73,7 +73,7 @@ export default function StudentForm({
       !form.className.trim() ||
       !form.attendanceNumber
     ) {
-      toast.error("कृपया सर्व आवश्यक माहिती भरा");
+      toast.error("कृपया नाव, जन्मतारीख, वर्ग आणि हजेरी क्रमांक भरा");
       return;
     }
 
@@ -99,7 +99,15 @@ export default function StudentForm({
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "माहिती save होऊ शकली नाही";
-      toast.error(`Error: ${msg}`);
+      if (
+        msg.toLowerCase().includes("unauthorized") ||
+        msg.toLowerCase().includes("admin") ||
+        msg.toLowerCase().includes("not authorized")
+      ) {
+        toast.error("Admin म्हणून login करा आणि पुन्हा प्रयत्न करा");
+      } else {
+        toast.error(`माहिती save होऊ शकली नाही: ${msg}`);
+      }
       // Do NOT close dialog on error — let user retry
     }
   };

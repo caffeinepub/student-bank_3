@@ -1,6 +1,5 @@
 import { createContext, createElement, useContext, useState } from "react";
 import type { ReactNode } from "react";
-import { useInternetIdentity } from "./useInternetIdentity";
 
 export type AuthRole = "admin" | "user" | "guest";
 
@@ -21,8 +20,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { login: iiLogin, clear: iiClear } = useInternetIdentity();
-
   const [role, setRole] = useState<AuthRole>(() => {
     const saved = localStorage.getItem("auth_role");
     return (saved as AuthRole) || "guest";
@@ -40,19 +37,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (
     accountNumber: string,
-    _password: string,
+    password: string,
     loginType: AuthRole,
   ): Promise<boolean> => {
     if (loginType === "admin") {
-      // Must successfully complete II login before granting admin session
-      // If iiLogin throws, the error propagates to the caller
-      await iiLogin();
-      setRole("admin");
-      localStorage.setItem("auth_role", "admin");
-      return true;
+      // Simple admin login: username=admin, password=admin
+      if (
+        accountNumber.trim().toLowerCase() === "admin" &&
+        password.trim() === "admin"
+      ) {
+        setRole("admin");
+        localStorage.setItem("auth_role", "admin");
+        return true;
+      }
+      return false;
     }
     if (loginType === "user") {
       if (!accountNumber.trim()) return false;
+      // User login: account number as both username and password
+      if (accountNumber.trim() !== password.trim()) return false;
       setRole("user");
       setUserAccountNumber(accountNumber.trim());
       localStorage.setItem("auth_role", "user");
@@ -63,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    iiClear();
     setRole("guest");
     setUserAccountNumber(null);
     localStorage.removeItem("auth_role");
