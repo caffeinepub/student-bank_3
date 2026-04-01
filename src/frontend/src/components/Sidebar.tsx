@@ -69,7 +69,7 @@ const navItems: NavItem[] = [
     label: "History",
     labelMr: "इतिहास",
     icon: <History className="w-5 h-5" />,
-    adminOnly: true,
+    adminOnly: false,
     gradient: "gradient-red",
   },
   {

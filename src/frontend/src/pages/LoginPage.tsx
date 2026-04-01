@@ -1,15 +1,31 @@
 import { CreditCard, Lock, ShieldCheck, User } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [loginType, setLoginType] = useState<"admin" | "user">("admin");
+  const [loginType, setLoginType] = useState<"admin" | "user">("user");
   const [accountNumber, setAccountNumber] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showAdminTab, setShowAdminTab] = useState(false);
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogotap = () => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      tapCountRef.current = 0;
+    }, 2000);
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      setShowAdminTab(true);
+      setLoginType("admin");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,12 +108,15 @@ export default function LoginPage() {
       <div className="w-full max-w-sm relative z-10">
         {/* Logo / Header */}
         <div className="text-center mb-7">
-          <div
-            className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 shadow-2xl"
+          <button
+            type="button"
+            onClick={handleLogotap}
+            className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 shadow-2xl cursor-pointer select-none border-0 p-0"
             style={{
               background:
                 "linear-gradient(135deg, oklch(0.62 0.18 145), oklch(0.48 0.14 215))",
             }}
+            aria-label="Logo"
           >
             <img
               src="/assets/generated/bank-logo.dim_256x256.png"
@@ -109,7 +128,7 @@ export default function LoginPage() {
                   '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>';
               }}
             />
-          </div>
+          </button>
           <h1 className="text-3xl font-bold text-white font-heading drop-shadow">
             विद्यार्थी बँक
           </h1>
@@ -126,58 +145,62 @@ export default function LoginPage() {
             backdropFilter: "blur(20px)",
           }}
         >
-          {/* Tab Toggle */}
-          <div
-            className="flex rounded-xl p-1 mb-6"
-            style={{ background: "rgba(255,255,255,0.08)" }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                setLoginType("admin");
-                setError("");
-              }}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
-                loginType === "admin"
-                  ? "text-white shadow-lg"
-                  : "text-white/50 hover:text-white/80"
-              }`}
-              style={
-                loginType === "admin"
-                  ? {
-                      background:
-                        "linear-gradient(135deg, oklch(0.42 0.14 175), oklch(0.35 0.12 195))",
-                    }
-                  : {}
-              }
+          {/* Tab Toggle — only visible after secret admin unlock */}
+          {showAdminTab && (
+            <div
+              className="flex rounded-xl p-1 mb-6"
+              style={{ background: "rgba(255,255,255,0.08)" }}
             >
-              <Lock className="w-3.5 h-3.5" />
-              Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setLoginType("user");
-                setError("");
-              }}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
-                loginType === "user"
-                  ? "text-white shadow-lg"
-                  : "text-white/50 hover:text-white/80"
-              }`}
-              style={
-                loginType === "user"
-                  ? {
-                      background:
-                        "linear-gradient(135deg, oklch(0.72 0.18 55), oklch(0.60 0.20 35))",
-                    }
-                  : {}
-              }
-            >
-              <User className="w-3.5 h-3.5" />
-              विद्यार्थी
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginType("admin");
+                  setError("");
+                }}
+                data-ocid="login.admin.tab"
+                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                  loginType === "admin"
+                    ? "text-white shadow-lg"
+                    : "text-white/50 hover:text-white/80"
+                }`}
+                style={
+                  loginType === "admin"
+                    ? {
+                        background:
+                          "linear-gradient(135deg, oklch(0.42 0.14 175), oklch(0.35 0.12 195))",
+                      }
+                    : {}
+                }
+              >
+                <Lock className="w-3.5 h-3.5" />
+                Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginType("user");
+                  setError("");
+                }}
+                data-ocid="login.user.tab"
+                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                  loginType === "user"
+                    ? "text-white shadow-lg"
+                    : "text-white/50 hover:text-white/80"
+                }`}
+                style={
+                  loginType === "user"
+                    ? {
+                        background:
+                          "linear-gradient(135deg, oklch(0.72 0.18 55), oklch(0.60 0.20 35))",
+                      }
+                    : {}
+                }
+              >
+                <User className="w-3.5 h-3.5" />
+                विद्यार्थी
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {loginType === "user" && (

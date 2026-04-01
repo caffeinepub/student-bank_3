@@ -5,20 +5,26 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Account, Student, Transaction } from "../backend";
 import { useActor } from "../hooks/useActor";
+import { useAuth } from "../hooks/useAuth";
 import { useGetAllAccounts, useGetAllStudents } from "../hooks/useQueries";
 import { exportTransactionsCSV } from "../utils/exportCSV";
 
 export default function HistoryPage() {
   const { actor } = useActor();
-  const { data: accounts = [] } = useGetAllAccounts();
+  const { userAccountNumber, isAdmin } = useAuth();
+  const { data: accounts = [], isSuccess: accountsLoaded } =
+    useGetAllAccounts();
   const { data: students = [] } = useGetAllStudents();
 
-  const [searchAccNum, setSearchAccNum] = useState("");
+  const [searchAccNum, setSearchAccNum] = useState(
+    isAdmin ? "" : userAccountNumber || "",
+  );
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [autoSearchDone, setAutoSearchDone] = useState(false);
   const [searchResult, setSearchResult] = useState<{
     account: Account | null;
     student: Student | null;
@@ -26,6 +32,43 @@ export default function HistoryPage() {
   } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState("");
+
+  // For non-admin users: auto-search when accounts data loads
+  useEffect(() => {
+    if (!isAdmin && userAccountNumber && accountsLoaded && !autoSearchDone) {
+      setAutoSearchDone(true);
+      setSearchAccNum(userAccountNumber);
+      // Trigger search automatically
+      (async () => {
+        setIsSearching(true);
+        try {
+          const account =
+            accounts.find((a) => a.accountNumber === userAccountNumber) || null;
+          if (account) {
+            const student =
+              students.find((s) => s.id === account.studentId) || null;
+            let txs: Transaction[] = [];
+            if (actor) {
+              txs = await actor.getTransactionsByAccount(userAccountNumber);
+            }
+            txs = [...txs].sort((a, b) => Number(a.date) - Number(b.date));
+            setSearchResult({ account, student, transactions: txs });
+          }
+        } catch {
+          // silent
+        }
+        setIsSearching(false);
+      })();
+    }
+  }, [
+    isAdmin,
+    userAccountNumber,
+    accountsLoaded,
+    autoSearchDone,
+    accounts,
+    students,
+    actor,
+  ]);
 
   const handleSearch = async () => {
     if (!searchAccNum.trim()) {
@@ -134,10 +177,11 @@ export default function HistoryPage() {
               id="history-acc-num"
               type="text"
               value={searchAccNum}
-              onChange={(e) => setSearchAccNum(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              onChange={(e) => isAdmin && setSearchAccNum(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && isAdmin && handleSearch()}
               placeholder="Enter account number"
-              className="w-full border border-input rounded-xl px-4 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              readOnly={!isAdmin}
+              className={`w-full border border-input rounded-xl px-4 py-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 ${!isAdmin ? "bg-muted cursor-not-allowed" : ""}`}
             />
           </div>
 

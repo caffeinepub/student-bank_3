@@ -34,7 +34,9 @@ const queryClient = new QueryClient({
 
 function AppInner() {
   const { isAuthenticated, isAdmin } = useAuth();
-  const [currentPage, setCurrentPage] = useState<PageId>("home");
+  const [currentPage, setCurrentPage] = useState<PageId>(
+    isAdmin ? "home" : "passbook",
+  );
   // Keep global actor store in sync so all mutations can access the latest actor
   useSyncGlobalActor();
   const { actor, isFetching: actorFetching } = useActor();
@@ -54,11 +56,11 @@ function AppInner() {
       case "transactions":
         return isAdmin ? <TransactionPage /> : <PassbookPage />;
       case "history":
-        return isAdmin ? <HistoryPage /> : <PassbookPage />;
+        return <HistoryPage />;
       case "passbook":
         return <PassbookPage />;
       case "bank-details":
-        return isAdmin ? <BankDetailsPage /> : <PassbookPage />;
+        return <BankDetailsPage />;
       default:
         return <HomePage />;
     }
@@ -66,9 +68,9 @@ function AppInner() {
 
   const pageTitle = {
     home: "Dashboard",
-    students: isAdmin ? "Students" : "Passbook",
-    accounts: isAdmin ? "Accounts" : "Passbook",
-    transactions: isAdmin ? "Transactions" : "Passbook",
+    students: "Students",
+    accounts: "Accounts",
+    transactions: "Transactions",
     history: "History",
     passbook: "Passbook",
     "bank-details": "Bank Details",
@@ -76,12 +78,12 @@ function AppInner() {
 
   const pageSubtitle = {
     home: "Overview of all activities",
-    students: isAdmin ? "Manage student records" : "Your passbook",
-    accounts: isAdmin ? "Manage bank accounts" : "Your passbook",
-    transactions: isAdmin ? "Manage transactions" : "Your passbook",
-    history: "View transaction history",
-    passbook: "View your passbook",
-    "bank-details": "Manage bank details",
+    students: "Manage student records",
+    accounts: "Manage bank accounts",
+    transactions: "Manage transactions",
+    history: isAdmin ? "View transaction history" : "तुमचा व्यवहार इतिहास",
+    passbook: isAdmin ? "View passbook" : "तुमचे पासबुक",
+    "bank-details": "Bank Details",
   }[currentPage];
 
   return (

@@ -7,7 +7,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import {
   useGetAllAccounts,
@@ -17,14 +17,25 @@ import {
 
 export default function PassbookPage() {
   const { userAccountNumber, isAdmin } = useAuth();
-  const { data: accounts = [] } = useGetAllAccounts();
+  const { data: accounts = [], isSuccess: accountsLoaded } =
+    useGetAllAccounts();
   const { data: students = [] } = useGetAllStudents();
 
-  const defaultAccNum = isAdmin ? "" : userAccountNumber || "";
-  const [inputAccNum, setInputAccNum] = useState(defaultAccNum);
-  const [lookupAccNum, setLookupAccNum] = useState(
-    isAdmin ? "" : defaultAccNum,
+  const [inputAccNum, setInputAccNum] = useState(
+    isAdmin ? "" : userAccountNumber || "",
   );
+  const [lookupAccNum, setLookupAccNum] = useState(
+    isAdmin ? "" : userAccountNumber || "",
+  );
+
+  // For non-admin users: once accounts data loads, automatically set the lookup
+  // This handles cases where userAccountNumber is set but data wasn't loaded yet
+  useEffect(() => {
+    if (!isAdmin && userAccountNumber && accountsLoaded) {
+      setLookupAccNum(userAccountNumber);
+      setInputAccNum(userAccountNumber);
+    }
+  }, [isAdmin, userAccountNumber, accountsLoaded]);
 
   const { data: transactions = [], isLoading: txLoading } =
     useGetTransactionsByAccount(lookupAccNum);
