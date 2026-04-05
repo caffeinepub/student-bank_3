@@ -2,8 +2,10 @@ import { Download, FileDown, FileUp, Loader2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
+  useAddAccount,
   useAddBankDetail,
   useAddStudent,
+  useAddTransaction,
   useGetAllAccounts,
   useGetAllBankDetails,
   useGetAllStudents,
@@ -15,15 +17,22 @@ import {
   exportBankDetailsCSV,
   exportStudentsCSV,
   exportTransactionsCSVAll,
+  parseAccountsCSV,
   parseBankDetailsCSV,
   parseStudentsCSV,
+  parseTransactionsCSV,
 } from "../utils/importExport";
 
 export default function ImportExportPage() {
   const [importingStudents, setImportingStudents] = useState(false);
   const [importingBanks, setImportingBanks] = useState(false);
+  const [importingAccounts, setImportingAccounts] = useState(false);
+  const [importingTransactions, setImportingTransactions] = useState(false);
+
   const studentFileRef = useRef<HTMLInputElement>(null);
   const bankFileRef = useRef<HTMLInputElement>(null);
+  const accountFileRef = useRef<HTMLInputElement>(null);
+  const transactionFileRef = useRef<HTMLInputElement>(null);
 
   const { data: students = [] } = useGetAllStudents();
   const { data: accounts = [] } = useGetAllAccounts();
@@ -32,8 +41,10 @@ export default function ImportExportPage() {
 
   const addStudent = useAddStudent();
   const addBankDetail = useAddBankDetail();
+  const addAccount = useAddAccount();
+  const addTransaction = useAddTransaction();
 
-  // ─── Export Handlers ────────────────────────────────────────────────────────
+  // ─── Export Handlers ────────────────────────────────────────────────────────────────────
 
   const handleExportAll = () => {
     try {
@@ -56,7 +67,7 @@ export default function ImportExportPage() {
   const handleExportAccounts = () => {
     try {
       exportAccountsCSV(accounts, students);
-      toast.success(`${accounts.length} खाती Export केली!`);
+      toast.success(`${accounts.length} خाती Export केली!`);
     } catch {
       toast.error("Export करताना त्रुटी आली.");
     }
@@ -80,7 +91,7 @@ export default function ImportExportPage() {
     }
   };
 
-  // ─── Import Handlers ────────────────────────────────────────────────────────
+  // ─── Import Handlers ────────────────────────────────────────────────────────────────────
 
   const handleStudentImport = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -100,7 +111,6 @@ export default function ImportExportPage() {
       let skipped = 0;
 
       for (const s of parsed) {
-        // Skip detection: check if same name+className+attendanceNumber exists
         const exists = students.some(
           (existing) =>
             existing.name.trim().toLowerCase() ===
@@ -159,7 +169,6 @@ export default function ImportExportPage() {
       let skipped = 0;
 
       for (const b of parsed) {
-        // Skip detection: check if ifscCode already exists
         const exists = bankDetails.some(
           (existing) =>
             existing.ifscCode.trim().toLowerCase() ===
@@ -195,6 +204,136 @@ export default function ImportExportPage() {
     }
   };
 
+  const handleAccountImport = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportingAccounts(true);
+    try {
+      const text = await file.text();
+      const parsed = parseAccountsCSV(text);
+      if (parsed.length === 0) {
+        toast.error("CSV मध्ये कोणतेही خाते आढळले नाही.");
+        return;
+      }
+
+      let added = 0;
+      let skipped = 0;
+
+      for (const a of parsed) {
+        // Skip if account number already exists
+        const exists = accounts.some(
+          (existing) =>
+            existing.accountNumber.trim() === a.accountNumber.trim(),
+        );
+        if (exists) {
+          skipped++;
+          continue;
+        }
+        // Find student by name
+        const matchedStudent = students.find(
+          (s) =>
+            s.name.trim().toLowerCase() === a.studentName.trim().toLowerCase(),
+        );
+        if (!matchedStudent) {
+          skipped++;
+          continue;
+        }
+        try {
+          await addAccount.mutateAsync({
+            studentId: Number(matchedStudent.id),
+            bankName: a.bankName,
+            accountNumber: a.accountNumber,
+            initialAmount: Number(a.initialAmount) || 0,
+            ifscCode: a.ifscCode,
+          });
+          added++;
+        } catch {
+          skipped++;
+        }
+      }
+
+      if (added > 0) {
+        toast.success(
+          `${added} خाती जोडली, ${skipped} skip केले (आधीच आहेत किंवा विद्यार्थी सापडला नाही)`,
+        );
+      } else if (skipped > 0) {
+        toast.warning(
+          `सर्व ${skipped} خाती skip केल्या — आधी विद्यार्थी import करा आणि नंतर خाती import करा.`,
+        );
+      } else {
+        toast.info("खाती जोडली नाही.");
+      }
+    } catch {
+      toast.error("Import करताना त्रुटी आली.");
+    } finally {
+      setImportingAccounts(false);
+      if (accountFileRef.current) accountFileRef.current.value = "";
+    }
+  };
+
+  const handleTransactionImport = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportingTransactions(true);
+    try {
+      const text = await file.text();
+      const parsed = parseTransactionsCSV(text);
+      if (parsed.length === 0) {
+        toast.error("CSV मध्ये कोणतेही व्यवहार आढळले नाही.");
+        return;
+      }
+
+      let added = 0;
+      let skipped = 0;
+
+      for (const t of parsed) {
+        // Verify account exists
+        const accountExists = accounts.some(
+          (a) => a.accountNumber.trim() === t.accountNumber.trim(),
+        );
+        if (!accountExists) {
+          skipped++;
+          continue;
+        }
+        try {
+          await addTransaction.mutateAsync({
+            accountNumber: t.accountNumber,
+            transactionType: t.transactionType,
+            amount: Number(t.amount) || 0,
+            reason: t.reason,
+            date: t.date
+              ? new Date(t.date).toISOString().split("T")[0]
+              : undefined,
+          });
+          added++;
+        } catch {
+          skipped++;
+        }
+      }
+
+      if (added > 0) {
+        toast.success(
+          `${added} व्यवहार जोडले, ${skipped} skip केले (خाते सापडले नाही)`,
+        );
+      } else if (skipped > 0) {
+        toast.warning(
+          `सर्व ${skipped} व्यवहार skip केल्या — आधी خाती import करा आणि नंतर व्यवहार import करा.`,
+        );
+      } else {
+        toast.info("व्यवहार जोडले नाही.");
+      }
+    } catch {
+      toast.error("Import करताना त्रुटी आली.");
+    } finally {
+      setImportingTransactions(false);
+      if (transactionFileRef.current) transactionFileRef.current.value = "";
+    }
+  };
+
   return (
     <div className="p-6 space-y-8">
       {/* Header */}
@@ -211,7 +350,7 @@ export default function ImportExportPage() {
       {/* Export Section */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div
-          className="px-6 py-4 gradient-green flex items-center gap-3"
+          className="px-6 py-4 flex items-center gap-3"
           style={{
             background:
               "linear-gradient(135deg, oklch(0.55 0.18 150) 0%, oklch(0.45 0.22 160) 100%)",
@@ -231,7 +370,7 @@ export default function ImportExportPage() {
                   सर्व माहिती Export करा
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  विद्यार्थी, खाती, व्यवहार आणि बँक तपशील एकत्र एका file मध्ये
+                  विद्यार्थी, خाती, व्यवहार आणि बँक तपशील एकत्र एका file मध्ये
                 </p>
               </div>
               <button
@@ -272,7 +411,7 @@ export default function ImportExportPage() {
 
             <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/10">
               <div>
-                <p className="font-medium text-foreground text-sm">खाती</p>
+                <p className="font-medium text-foreground text-sm">خाती</p>
                 <p className="text-xs text-muted-foreground">
                   {accounts.length} records
                 </p>
@@ -342,146 +481,152 @@ export default function ImportExportPage() {
           </h2>
         </div>
         <div className="p-6 space-y-5">
-          {/* Students Import */}
-          <div className="p-5 rounded-xl border border-border space-y-4">
-            <div>
-              <h3 className="font-semibold text-foreground">
-                विद्यार्थी Import करा
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                CSV file upload करा — आधी असलेले विद्यार्थी skip होतील.
+          {/* Import order note */}
+          <div className="flex gap-3 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <span className="text-blue-500 text-lg leading-none mt-0.5">ℹ️</span>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">आधी हे वाचा:</p>
+              <p>शीर्षक 1: विद्यार्थी import करा</p>
+              <p>शीर्षक 2: बँक तपशील import करा</p>
+              <p>
+                शीर्षक 3: خाती import करा (export केलेल्या accounts_backup.csv
+                वापरा)
               </p>
-            </div>
-
-            <div className="bg-muted/30 rounded-lg p-3 border border-dashed border-border">
-              <p className="text-xs font-medium text-muted-foreground mb-1">
-                आवश्यक CSV Format:
+              <p>
+                शीर्षक 4: व्यवहार import करा (export केलेल्या transactions_backup.csv
+                वापरा)
               </p>
-              <code className="text-xs text-foreground font-mono break-all">
-                name,dateOfBirth,className,attendanceNumber,schoolName,taluka,district
-              </code>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                ref={studentFileRef}
-                type="file"
-                accept=".csv"
-                onChange={handleStudentImport}
-                className="hidden"
-                id="student-import-file"
-                data-ocid="importexport.upload_button"
-              />
-              <label
-                htmlFor="student-import-file"
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer transition-all hover:opacity-90 ${
-                  importingStudents
-                    ? "opacity-60 cursor-not-allowed pointer-events-none"
-                    : ""
-                }`}
-                style={{
-                  background:
-                    "linear-gradient(135deg, oklch(0.50 0.20 270) 0%, oklch(0.40 0.25 280) 100%)",
-                }}
-              >
-                {importingStudents ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
-                {importingStudents
-                  ? "Import होत आहे..."
-                  : "विद्यार्थी CSV Upload करा"}
-              </label>
-              {importingStudents && (
-                <span
-                  className="text-xs text-muted-foreground"
-                  data-ocid="importexport.loading_state"
-                >
-                  प्रक्रिया सुरू आहे...
-                </span>
-              )}
             </div>
           </div>
+
+          {/* Students Import */}
+          <ImportCard
+            title="विद्यार्थी Import करा (Step 1)"
+            description="CSV file upload करा — आधीच असलेले विद्यार्थी skip होतील."
+            format="name,dateOfBirth,className,attendanceNumber,schoolName,taluka,district"
+            loading={importingStudents}
+            fileRef={studentFileRef}
+            inputId="student-import-file"
+            label="विद्यार्थी CSV Upload करा"
+            onChange={handleStudentImport}
+            gradient="linear-gradient(135deg, oklch(0.50 0.20 270) 0%, oklch(0.40 0.25 280) 100%)"
+          />
 
           {/* Bank Details Import */}
-          <div className="p-5 rounded-xl border border-border space-y-4">
-            <div>
-              <h3 className="font-semibold text-foreground">
-                बँक तपशील Import करा
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                CSV file upload करा — आधीच असलेले IFSC codes skip होतील.
-              </p>
-            </div>
+          <ImportCard
+            title="बँक तपशील Import करा (Step 2)"
+            description="CSV file upload करा — आधीच असलेले IFSC codes skip होतील."
+            format="bankName,taluka,district,ifscCode"
+            loading={importingBanks}
+            fileRef={bankFileRef}
+            inputId="bank-import-file"
+            label="बँक तपशील CSV Upload करा"
+            onChange={handleBankImport}
+            gradient="linear-gradient(135deg, oklch(0.50 0.20 270) 0%, oklch(0.40 0.25 280) 100%)"
+          />
 
-            <div className="bg-muted/30 rounded-lg p-3 border border-dashed border-border">
-              <p className="text-xs font-medium text-muted-foreground mb-1">
-                आवश्यक CSV Format:
-              </p>
-              <code className="text-xs text-foreground font-mono break-all">
-                bankName,taluka,district,ifscCode
-              </code>
-            </div>
+          {/* Accounts Import */}
+          <ImportCard
+            title="خाती Import करा (Step 3)"
+            description="आधी विद्यार्थी import करा, मग خाती import करा. accounts_backup.csv वापरा."
+            format="accountNumber,studentName,bankName,ifscCode,className,initialAmount"
+            loading={importingAccounts}
+            fileRef={accountFileRef}
+            inputId="account-import-file"
+            label="خाती CSV Upload करा"
+            onChange={handleAccountImport}
+            gradient="linear-gradient(135deg, oklch(0.55 0.22 30) 0%, oklch(0.45 0.25 20) 100%)"
+          />
 
-            <div className="flex items-center gap-3">
-              <input
-                ref={bankFileRef}
-                type="file"
-                accept=".csv"
-                onChange={handleBankImport}
-                className="hidden"
-                id="bank-import-file"
-                data-ocid="importexport.upload_button"
-              />
-              <label
-                htmlFor="bank-import-file"
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer transition-all hover:opacity-90 ${
-                  importingBanks
-                    ? "opacity-60 cursor-not-allowed pointer-events-none"
-                    : ""
-                }`}
-                style={{
-                  background:
-                    "linear-gradient(135deg, oklch(0.50 0.20 270) 0%, oklch(0.40 0.25 280) 100%)",
-                }}
-              >
-                {importingBanks ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
-                {importingBanks
-                  ? "Import होत आहे..."
-                  : "बँक तपशील CSV Upload करा"}
-              </label>
-              {importingBanks && (
-                <span
-                  className="text-xs text-muted-foreground"
-                  data-ocid="importexport.loading_state"
-                >
-                  प्रक्रिया सुरू आहे...
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Info Note */}
-          <div className="flex gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <span className="text-amber-500 text-lg leading-none mt-0.5">
-              ℹ️
-            </span>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p className="font-semibold text-foreground">महत्त्वाची टीप:</p>
-              <p>• खाती (Accounts) import साठी आधी विद्यार्थी import करावेत.</p>
-              <p>• Transactions import उपलब्ध नाही — ते manually जोडावे लागतील.</p>
-              <p>
-                • Full Backup CSV मध्ये सर्व sections आहेत, पण import साठी वेगळ्या
-                files वापरा.
-              </p>
-            </div>
-          </div>
+          {/* Transactions Import */}
+          <ImportCard
+            title="व्यवहार Import करा (Step 4)"
+            description="खाती import केल्यानंतर व्यवहार import करा. transactions_backup.csv वापरा."
+            format="date,accountNumber,studentName,transactionType,amount,...,reason"
+            loading={importingTransactions}
+            fileRef={transactionFileRef}
+            inputId="transaction-import-file"
+            label="व्यवहार CSV Upload करा"
+            onChange={handleTransactionImport}
+            gradient="linear-gradient(135deg, oklch(0.48 0.22 160) 0%, oklch(0.38 0.25 150) 100%)"
+          />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Reusable Import Card ──────────────────────────────────────────────────────────────────────────
+
+function ImportCard({
+  title,
+  description,
+  format,
+  loading,
+  fileRef,
+  inputId,
+  label,
+  onChange,
+  gradient,
+}: {
+  title: string;
+  description: string;
+  format: string;
+  loading: boolean;
+  fileRef: React.RefObject<HTMLInputElement | null>;
+  inputId: string;
+  label: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  gradient: string;
+}) {
+  return (
+    <div className="p-5 rounded-xl border border-border space-y-4">
+      <div>
+        <h3 className="font-semibold text-foreground">{title}</h3>
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      </div>
+
+      <div className="bg-muted/30 rounded-lg p-3 border border-dashed border-border">
+        <p className="text-xs font-medium text-muted-foreground mb-1">
+          आवश्यक CSV Format:
+        </p>
+        <code className="text-xs text-foreground font-mono break-all">
+          {format}
+        </code>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv"
+          onChange={onChange}
+          className="hidden"
+          id={inputId}
+          data-ocid="importexport.upload_button"
+        />
+        <label
+          htmlFor={inputId}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer transition-all hover:opacity-90 ${
+            loading ? "opacity-60 cursor-not-allowed pointer-events-none" : ""
+          }`}
+          style={{ background: gradient }}
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4" />
+          )}
+          {loading ? "Import होत आहे..." : label}
+        </label>
+        {loading && (
+          <span
+            className="text-xs text-muted-foreground"
+            data-ocid="importexport.loading_state"
+          >
+            प्रक्रिया सुरू आहे...
+          </span>
+        )}
       </div>
     </div>
   );

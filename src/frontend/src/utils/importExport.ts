@@ -258,6 +258,24 @@ export interface ParsedBankDetail {
   ifscCode: string;
 }
 
+export interface ParsedAccount {
+  accountNumber: string;
+  studentName: string;
+  bankName: string;
+  ifscCode: string;
+  className: string;
+  initialAmount: string;
+}
+
+export interface ParsedTransaction {
+  date: string;
+  accountNumber: string;
+  studentName: string;
+  transactionType: string;
+  amount: string;
+  reason: string;
+}
+
 export function parseStudentsCSV(text: string): ParsedStudent[] {
   const lines = text
     .split("\n")
@@ -305,4 +323,57 @@ export function parseBankDetailsCSV(text: string): ParsedBankDetail[] {
       };
     })
     .filter((b) => b.bankName.length > 0 && b.ifscCode.length > 0);
+}
+
+export function parseAccountsCSV(text: string): ParsedAccount[] {
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  if (lines.length < 2) return [];
+
+  const dataLines = lines.slice(1).filter((l) => !l.startsWith("#"));
+
+  return dataLines
+    .map((line) => {
+      const cols = parseCSVLine(line);
+      return {
+        accountNumber: cols[0] || "",
+        studentName: cols[1] || "",
+        bankName: cols[2] || "",
+        ifscCode: cols[3] || "",
+        className: cols[4] || "",
+        initialAmount: cols[5] || "0",
+      };
+    })
+    .filter((a) => a.accountNumber.length > 0);
+}
+
+export function parseTransactionsCSV(text: string): ParsedTransaction[] {
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  if (lines.length < 2) return [];
+
+  const dataLines = lines.slice(1).filter((l) => !l.startsWith("#"));
+
+  return dataLines
+    .map((line) => {
+      const cols = parseCSVLine(line);
+      // CSV columns: date,accountNumber,studentName,transactionType,amount,...,reason
+      return {
+        date: cols[0] || "",
+        accountNumber: cols[1] || "",
+        studentName: cols[2] || "",
+        transactionType: cols[3] || "",
+        amount: cols[4] || "0",
+        reason: cols[8] || cols[5] || "", // reason is last column
+      };
+    })
+    .filter(
+      (t) =>
+        t.accountNumber.length > 0 &&
+        (t.transactionType === "Deposit" || t.transactionType === "Withdrawal"),
+    );
 }
