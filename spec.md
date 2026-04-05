@@ -1,47 +1,65 @@
 # Student Bank
 
 ## Current State
-- PassbookPage shows passbook with student/account info and transaction table, but print layout is incomplete — transactions are truncated/missing on print, "Reason" column is hidden on small screens but also hidden on print.
-- HistoryPage has print and download CSV, but print layout is missing full student/bank/account details in the printed output; all transactions may not appear.
-- Footer on all pages shows "Built with ❤️ using caffeine.ai · © Student Bank".
-- No PDF download option in PassbookPage.
-- `hidden sm:table-cell` causes Reason column to be invisible on print.
+
+- Version 23 is live with all student bank features: Students, Accounts, Transactions, History, Passbook, Bank Details pages
+- Admin login (admin/admin) and Student login (account number as both username and password)
+- Colorful gradient UI with Poppins/Nunito fonts, vaibhavgavali branding
+- CSV export exists only for passbook/history pages via exportCSV.ts utility
+- No bulk CSV import/export for Students, Accounts, Transactions, Bank Details
+- Data loss occurs when canister is replaced; user needs backup/restore capability
 
 ## Requested Changes (Diff)
 
 ### Add
-- PDF/print download button in PassbookPage (using window.print with proper @media print styles).
-- Comprehensive `@media print` CSS: ensure all table columns including Reason are visible in print, force table to show all rows, hide browser UI artifacts.
-- A complete print-header in PassbookPage showing: bank name, school name, student full details, account details, then full transaction table with all rows and all columns.
-- A complete print-header in HistoryPage showing: Student Bank header, student details, account/bank details, date range, then full transaction table with all columns.
-- "vaibhavgavali" credit text in footers of all pages.
+- **Export CSV** button on Students, Accounts, Transactions (all), and Bank Details pages — downloads all data as CSV
+- **Import CSV** button on Students, Accounts, and Bank Details pages — parses CSV file and bulk-adds records that don't already exist
+- A new **ImportExportPage** accessible from sidebar (Admin only) for full backup/restore of ALL data at once
+- CSV format documentation shown in import dialog so user knows what columns to use
+- Success/error feedback after import (how many records imported, how many skipped)
 
 ### Modify
-- PassbookPage footer: replace "Built with ❤️ using caffeine.ai" with "vaibhavgavali".
-- HistoryPage footer: replace "Built with ❤️ using caffeine.ai" with "vaibhavgavali".
-- All other page footers (HomePage, StudentPage, AccountPage, TransactionPage, BankDetailsPage): same footer replacement.
-- PassbookPage transaction table: remove `hidden sm:table-cell` from Reason column so it appears on print.
-- HistoryPage transaction table: remove `hidden sm:table-cell` from Reason column so it appears on print.
-- Print CSS: ensure `.print-only` blocks are `display: block` and `.no-print` hidden during print, table cells visible.
+- StudentPage: add Export CSV + Import CSV buttons in header area
+- AccountPage: add Export CSV button only (accounts depend on student IDs, so import is complex — skip import for accounts)
+- BankDetailsPage: add Export CSV + Import CSV buttons
+- Sidebar: add "Import/Export" nav link (admin only)
+- App.tsx: add 'import-export' to PageId union and renderPage switch
 
 ### Remove
-- "❤️ using caffeine" text from all page footers.
+- Nothing removed
 
 ## Implementation Plan
-1. Update PassbookPage.tsx:
-   - Fix print area: add full print header (Student Bank title, student info, account & bank info all in print-visible divs).
-   - Remove `hidden sm:table-cell` from Reason column in transaction table.
-   - Add Download PDF button (triggers window.print).
-   - Update footer text to "vaibhavgavali".
 
-2. Update HistoryPage.tsx:
-   - Enhance print header to include full student, account, bank details.
-   - Remove `hidden sm:table-cell` from Reason column.
-   - Update footer text to "vaibhavgavali".
+1. Create `src/frontend/src/utils/importExport.ts` — utility functions for:
+   - exportStudentsCSV(students): downloads students.csv
+   - exportAccountsCSV(accounts, students): downloads accounts.csv  
+   - exportBankDetailsCSV(bankDetails): downloads bank_details.csv
+   - exportTransactionsCSV(transactions): downloads transactions.csv (all transactions)
+   - exportAllDataCSV(students, accounts, transactions, bankDetails): downloads full_backup.csv with separate sections
+   - parseStudentsCSV(text): returns array of student objects
+   - parseBankDetailsCSV(text): returns array of bank detail objects
 
-3. Update all other pages (HomePage, StudentPage, AccountPage, TransactionPage, BankDetailsPage):
-   - Replace footer text with "vaibhavgavali".
+2. Create `src/frontend/src/pages/ImportExportPage.tsx` — admin-only page with:
+   - Export All button (downloads full backup as JSON-friendly CSV)
+   - Individual export buttons for each data type
+   - Individual import buttons for students and bank details
+   - Import dialog showing required CSV format/columns
+   - Import result feedback (x records added, y skipped)
 
-4. Update index.css print styles:
-   - Ensure `table-cell` visibility for print (override `hidden sm:table-cell`).
-   - Ensure all transaction rows show on print (no truncation).
+3. Modify `StudentPage.tsx` — add Export and Import buttons in page header
+4. Modify `AccountPage.tsx` — add Export button in page header
+5. Modify `BankDetailsPage.tsx` — add Export and Import buttons in page header
+6. Modify `Sidebar.tsx` — add Import/Export nav item (admin only)
+7. Modify `App.tsx` — add 'import-export' page routing
+
+### CSV Format for Students Import:
+```
+name,dateOfBirth,className,attendanceNumber,schoolName,taluka,district
+राहुल शर्मा,2010-05-15,5th,12,जिल्हा परिषद शाळा,कोल्हापूर,कोल्हापूर
+```
+
+### CSV Format for Bank Details Import:
+```
+bankName,taluka,district,ifscCode
+स्टेट बँक ऑफ इंडिया,कोल्हापूर,कोल्हापूर,SBIN0001234
+```

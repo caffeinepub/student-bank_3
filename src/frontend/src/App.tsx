@@ -9,6 +9,7 @@ import AccountPage from "./pages/AccountPage";
 import BankDetailsPage from "./pages/BankDetailsPage";
 import HistoryPage from "./pages/HistoryPage";
 import HomePage from "./pages/HomePage";
+import ImportExportPage from "./pages/ImportExportPage";
 import LoginPage from "./pages/LoginPage";
 import PassbookPage from "./pages/PassbookPage";
 import StudentPage from "./pages/StudentPage";
@@ -21,7 +22,8 @@ export type PageId =
   | "transactions"
   | "history"
   | "passbook"
-  | "bank-details";
+  | "bank-details"
+  | "import-export";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +63,8 @@ function AppInner() {
         return <PassbookPage />;
       case "bank-details":
         return <BankDetailsPage />;
+      case "import-export":
+        return isAdmin ? <ImportExportPage /> : <PassbookPage />;
       default:
         return <HomePage />;
     }
@@ -74,6 +78,7 @@ function AppInner() {
     history: "History",
     passbook: "Passbook",
     "bank-details": "Bank Details",
+    "import-export": "Import / Export",
   }[currentPage];
 
   const pageSubtitle = {
@@ -84,6 +89,7 @@ function AppInner() {
     history: isAdmin ? "View transaction history" : "तुमचा व्यवहार इतिहास",
     passbook: isAdmin ? "View passbook" : "तुमचे पासबुक",
     "bank-details": "Bank Details",
+    "import-export": "माहिती backup आणि restore",
   }[currentPage];
 
   return (

@@ -1,16 +1,30 @@
-import React, { useState } from "react";
+import { Download, Loader2, Upload } from "lucide-react";
+import type React from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import type { BankDetail } from "../backend";
 import BankDetailForm from "../components/BankDetailForm";
-import { useDeleteBankDetail, useGetAllBankDetails } from "../hooks/useQueries";
+import {
+  useAddBankDetail,
+  useDeleteBankDetail,
+  useGetAllBankDetails,
+} from "../hooks/useQueries";
+import {
+  exportBankDetailsCSV,
+  parseBankDetailsCSV,
+} from "../utils/importExport";
 
 export default function BankDetailsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editBankDetail, setEditBankDetail] = useState<BankDetail | null>(null);
   const [search, setSearch] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [importing, setImporting] = useState(false);
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   const { data: bankDetails = [], isLoading } = useGetAllBankDetails();
   const deleteBankDetail = useDeleteBankDetail();
+  const addBankDetail = useAddBankDetail();
 
   const filtered = bankDetails.filter(
     (b) =>
@@ -41,20 +55,111 @@ export default function BankDetailsPage() {
     if (!open) setEditBankDetail(null);
   };
 
+  const handleExport = () => {
+    try {
+      exportBankDetailsCSV(bankDetails);
+      toast.success(`${bankDetails.length} बँक तपशील Export केले!`);
+    } catch {
+      toast.error("Export करताना त्रुटी आली.");
+    }
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const parsed = parseBankDetailsCSV(text);
+      if (parsed.length === 0) {
+        toast.error("CSV मध्ये कोणताही बँक तपशील आढळला नाही.");
+        return;
+      }
+      let added = 0;
+      let skipped = 0;
+      for (const b of parsed) {
+        const exists = bankDetails.some(
+          (ex) =>
+            ex.ifscCode.trim().toLowerCase() ===
+            b.ifscCode.trim().toLowerCase(),
+        );
+        if (exists) {
+          skipped++;
+          continue;
+        }
+        try {
+          await addBankDetail.mutateAsync({
+            bankName: b.bankName,
+            taluka: b.taluka,
+            district: b.district,
+            ifscCode: b.ifscCode,
+          });
+          added++;
+        } catch {
+          skipped++;
+        }
+      }
+      if (added > 0) {
+        toast.success(`${added} बँक तपशील जोडले, ${skipped} skip केले`);
+      } else {
+        toast.info(`सर्व ${skipped} बँक तपशील आधीच आहेत.`);
+      }
+    } catch {
+      toast.error("Import करताना त्रुटी आली.");
+    } finally {
+      setImporting(false);
+      if (importFileRef.current) importFileRef.current.value = "";
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold text-foreground">बँक तपशील</h1>
-        <button
-          type="button"
-          onClick={() => {
-            setEditBankDetail(null);
-            setShowForm(true);
-          }}
-          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
-        >
-          + नवीन बँक तपशील
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-ocid="bankdetails.secondary_button"
+            onClick={handleExport}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-background text-foreground hover:bg-muted transition-colors text-sm font-medium"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+          <input
+            ref={importFileRef}
+            type="file"
+            accept=".csv"
+            onChange={handleImportFile}
+            className="hidden"
+            id="bank-page-import"
+            data-ocid="bankdetails.upload_button"
+          />
+          <label
+            htmlFor="bank-page-import"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-background text-foreground hover:bg-muted transition-colors text-sm font-medium cursor-pointer ${
+              importing ? "opacity-60 pointer-events-none" : ""
+            }`}
+          >
+            {importing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            Import CSV
+          </label>
+          <button
+            type="button"
+            data-ocid="bankdetails.primary_button"
+            onClick={() => {
+              setEditBankDetail(null);
+              setShowForm(true);
+            }}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+          >
+            + नवीन बँक तपशील
+          </button>
+        </div>
       </div>
 
       {deleteError && (
@@ -70,16 +175,23 @@ export default function BankDetailsPage() {
             placeholder="बँक, IFSC, तालुका किंवा जिल्हा शोधा..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            data-ocid="bankdetails.search_input"
             className="w-full max-w-sm border border-border rounded-lg px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           />
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">
+          <div
+            className="p-8 text-center text-muted-foreground"
+            data-ocid="bankdetails.loading_state"
+          >
             लोड होत आहे...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
+          <div
+            className="p-8 text-center text-muted-foreground"
+            data-ocid="bankdetails.empty_state"
+          >
             {search
               ? "कोणताही बँक तपशील सापडला नाही."
               : "अद्याप कोणताही बँक तपशील जोडलेला नाही."}
@@ -107,9 +219,10 @@ export default function BankDetailsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((bd) => (
+                {filtered.map((bd, idx) => (
                   <tr
                     key={bd.ifscCode}
+                    data-ocid={`bankdetails.item.${idx + 1}`}
                     className="border-t border-border hover:bg-muted/30 transition-colors"
                   >
                     <td className="p-3 font-medium text-foreground">
@@ -125,6 +238,7 @@ export default function BankDetailsPage() {
                         <button
                           type="button"
                           onClick={() => handleEdit(bd)}
+                          data-ocid={`bankdetails.edit_button.${idx + 1}`}
                           className="px-2 py-1 text-xs rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                         >
                           संपादित
@@ -133,6 +247,7 @@ export default function BankDetailsPage() {
                           type="button"
                           onClick={() => handleDelete(bd.ifscCode)}
                           disabled={deleteBankDetail.isPending}
+                          data-ocid={`bankdetails.delete_button.${idx + 1}`}
                           className="px-2 py-1 text-xs rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
                         >
                           हटवा

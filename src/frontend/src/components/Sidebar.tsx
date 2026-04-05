@@ -4,6 +4,7 @@ import {
   Building2,
   ChevronRight,
   CreditCard,
+  Download,
   GraduationCap,
   History,
   Home,
@@ -20,7 +21,8 @@ export type PageId =
   | "transactions"
   | "history"
   | "passbook"
-  | "bank-details";
+  | "bank-details"
+  | "import-export";
 
 interface NavItem {
   id: PageId;
@@ -87,6 +89,14 @@ const navItems: NavItem[] = [
     icon: <Building2 className="w-5 h-5" />,
     adminOnly: false,
     gradient: "gradient-teal",
+  },
+  {
+    id: "import-export",
+    label: "Import / Export",
+    labelMr: "माहिती backup",
+    icon: <Download className="w-5 h-5" />,
+    adminOnly: true,
+    gradient: "gradient-purple",
   },
 ];
 
@@ -198,6 +208,7 @@ export default function Sidebar({
                   <button
                     type="button"
                     onClick={() => handleNavigate(item.id)}
+                    data-ocid={`nav.${item.id}.link`}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
                       isActive
                         ? "bg-white/15 text-white shadow-md"
@@ -236,6 +247,7 @@ export default function Sidebar({
           <button
             type="button"
             onClick={logout}
+            data-ocid="nav.logout.button"
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
           >
             <LogOut className="w-5 h-5" />

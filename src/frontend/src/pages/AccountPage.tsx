@@ -1,4 +1,6 @@
+import { Download } from "lucide-react";
 import React, { useState } from "react";
+import { toast } from "sonner";
 import type { Account } from "../backend";
 import AccountForm from "../components/AccountForm";
 import {
@@ -6,6 +8,7 @@ import {
   useGetAllAccounts,
   useGetAllStudents,
 } from "../hooks/useQueries";
+import { exportAccountsCSV } from "../utils/importExport";
 
 export default function AccountPage() {
   const [showForm, setShowForm] = useState(false);
@@ -50,20 +53,41 @@ export default function AccountPage() {
     if (!open) setEditAccount(null);
   };
 
+  const handleExport = () => {
+    try {
+      exportAccountsCSV(accounts, students);
+      toast.success(`${accounts.length} खाती Export केली!`);
+    } catch {
+      toast.error("Export करताना त्रुटी आली.");
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold text-foreground">खाती</h1>
-        <button
-          type="button"
-          onClick={() => {
-            setEditAccount(null);
-            setShowForm(true);
-          }}
-          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
-        >
-          + नवीन खाते
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-ocid="accounts.secondary_button"
+            onClick={handleExport}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-background text-foreground hover:bg-muted transition-colors text-sm font-medium"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+          <button
+            type="button"
+            data-ocid="accounts.primary_button"
+            onClick={() => {
+              setEditAccount(null);
+              setShowForm(true);
+            }}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+          >
+            + नवीन खाते
+          </button>
+        </div>
       </div>
 
       {deleteError && (
@@ -79,16 +103,23 @@ export default function AccountPage() {
             placeholder="खाते क्रमांक, बँक किंवा विद्यार्थी शोधा..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            data-ocid="accounts.search_input"
             className="w-full max-w-sm border border-border rounded-lg px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
           />
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">
+          <div
+            className="p-8 text-center text-muted-foreground"
+            data-ocid="accounts.loading_state"
+          >
             लोड होत आहे...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
+          <div
+            className="p-8 text-center text-muted-foreground"
+            data-ocid="accounts.empty_state"
+          >
             {search ? "कोणतेही खाते सापडले नाही." : "अद्याप कोणतेही खाते जोडलेले नाही."}
           </div>
         ) : (
@@ -120,9 +151,10 @@ export default function AccountPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((account) => (
+                {filtered.map((account, idx) => (
                   <tr
                     key={account.accountNumber}
+                    data-ocid={`accounts.item.${idx + 1}`}
                     className="border-t border-border hover:bg-muted/30 transition-colors"
                   >
                     <td className="p-3 font-medium text-foreground">
@@ -142,6 +174,7 @@ export default function AccountPage() {
                         <button
                           type="button"
                           onClick={() => handleEdit(account)}
+                          data-ocid={`accounts.edit_button.${idx + 1}`}
                           className="px-2 py-1 text-xs rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                         >
                           संपादित
@@ -150,6 +183,7 @@ export default function AccountPage() {
                           type="button"
                           onClick={() => handleDelete(account.accountNumber)}
                           disabled={deleteAccount.isPending}
+                          data-ocid={`accounts.delete_button.${idx + 1}`}
                           className="px-2 py-1 text-xs rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
                         >
                           हटवा
